@@ -225,6 +225,7 @@ public class Main {
         }
     }
 
+    // Helper function
     private static void handleOpenQuestion(Actions a, String strQuestion, Difficulty diff, Scanner sc) {
         System.out.println(a.answerTextToString());
         int choice = getAnswerChoice(sc);
