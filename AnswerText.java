@@ -1,0 +1,44 @@
+package testing;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Objects;
+
+public class AnswerText implements Serializable {
+	/**
+	 * 
+	 */
+	@Serial
+	private static final long serialVersionUID = 1L;
+	private String answerText;
+
+	public AnswerText(String answerText) {
+		this.answerText = answerText;
+	}
+
+	public AnswerText(AnswerText other) {
+		this.answerText = other.answerText;
+	}
+
+	// no set for the text because there were no request for it
+	public String getAnswerText() {
+		return answerText;
+	}
+
+	public int hashCode() {
+		return Objects.hash(answerText);
+	}
+
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null || getClass() != obj.getClass())
+			return false;
+		AnswerText other = (AnswerText) obj;
+		return Objects.equals(answerText, other.answerText);
+	}
+
+	public String toString() {
+		return answerText;
+	}
+}
