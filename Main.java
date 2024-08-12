@@ -254,6 +254,7 @@ public class Main {
         }
     }
 
+    // Helper function
     private static void handleAmericanQuestion(Actions a, String strQuestion, Difficulty diff, Scanner sc) {
         Question aq = new AmericanQuestion(strQuestion, diff);
 
