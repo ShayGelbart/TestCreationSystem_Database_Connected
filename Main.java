@@ -2,16 +2,31 @@ package testing;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
 import java.util.InputMismatchException;
 import java.util.Scanner;
+import java.sql.*;
 
 import testing.Question.Difficulty;
 
 public class Main {
 
     public static void main(String[] args)
-            throws IOException, LessThanThreeAnswersException, AmountOfQuestionsException, ClassNotFoundException {
+            throws IOException, LessThanThreeAnswersException, AmountOfQuestionsException, ClassNotFoundException, SQLException {
         Scanner sc = new Scanner(System.in);
+        Connection connection = null;
+        try {
+            Class.forName("org.postgresql.Driver"); // line 18
+            String dbUrl = "jdbc:postgresql:TestCreation";
+            connection = DriverManager.getConnection(dbUrl, "postgres", "shay0307");
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM Actions");
+            while (rs.next()) {
+                System.out.println("- " + rs.getString("subjectName"));
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
         Subjects subjects = new Subjects();
         File f = new File("Subjects.dat");
         if (!f.exists())
@@ -29,10 +44,10 @@ public class Main {
             mainChoice = sc.nextInt();
             switch (mainChoice) {
                 case 1:
-                    testCreation(sc, subjects);
+                    testCreation(sc, subjects, connection);
                     break;
                 case 2:
-                    editOrNewMenu(sc, subjects);
+                    editOrNewMenu(sc, subjects, connection);
                     break;
                 case 0:
                     System.out.println("Goodbye,have a good day:)");
@@ -45,7 +60,8 @@ public class Main {
     }
 
     // test creation
-    public static void testCreation(Scanner sc, Subjects subjects) throws IOException, LessThanThreeAnswersException, AmountOfQuestionsException {
+    public static void testCreation(Scanner sc, Subjects subjects, Connection connection) throws
+            IOException, LessThanThreeAnswersException, AmountOfQuestionsException {
         if (subjects.getPools().isEmpty()) {
             System.out.println("There is no pool to make a test out of, create a pool first");
             return;
@@ -86,7 +102,7 @@ public class Main {
             System.out.println("Wasn't able to create a test, try again after altering the pool");
     }
 
-    public static void editOrNewMenu(Scanner sc, Subjects subjects) {
+    public static void editOrNewMenu(Scanner sc, Subjects subjects, Connection connection) throws SQLException {
         int editOrNewChoice;
         do {
             System.out.println("Welcome to the mini menu");
@@ -99,13 +115,13 @@ public class Main {
             editOrNewChoice = sc.nextInt();
             switch (editOrNewChoice) {
                 case 1:
-                    createAndDefineNewPool(sc, subjects);
+                    createAndDefineNewPool(sc, connection);
                     break;
                 case 2:
                     deletePool(sc, subjects);
                     break;
                 case 3:
-                    alterPoolMenu(sc, subjects);
+                    alterPoolMenu(sc, subjects, connection);
                     break;
                 case 0:
                     System.out.println("Goodbye,have a good day:)");
@@ -116,21 +132,22 @@ public class Main {
         } while (editOrNewChoice != 0);
     }
 
-    public static void createAndDefineNewPool(Scanner sc, Subjects subjects) {
+    public static void createAndDefineNewPool(Scanner sc, Connection connection) throws SQLException {
         System.out.println("You've decided to create a new pool");
         System.out.println("Enter your new subject:");
         String subject = sc.next();
-        Actions actions = new Actions(subject);
+        //Actions actions = new Actions(subject);
 
-        if (!subjects.addPoolToArray(actions)) {
-            System.out.println("There already exists a pool for that subject, try a different name");
+        if (!Subjects.addPoolToArray(subject, connection)) {
+            System.out.println("Unable to create a new pool, try again");
             return;
         }
+        System.out.println("Successfully created a new pool for " + subject);
 
         System.out.println("Enter how many questions would you like there to be in the " + subject + " pool:");
         int numOfQuestions = sc.nextInt();
 
-        while (actions.getQuestionArray().size() < numOfQuestions) {
+        while (Actions.getAmountOfQuestionsInSubjectPool(connection, subject) < numOfQuestions) {
             System.out.println("Enter the question's text:");
             String qText = sc.next();
             Difficulty diff = defineDifficulty(sc);
@@ -138,12 +155,11 @@ public class Main {
             System.out.println("Type true if you would like to add an open question, false for an American question:");
             boolean isOpen = sc.nextBoolean();
             if (isOpen) {
-                handleOpenQuestion(actions, qText, diff, sc);
+                handleOpenQuestion(subject, qText, diff, sc, connection);
             } else {
-                handleAmericanQuestion(actions, qText, diff, sc);
+                handleAmericanQuestion(subject, qText, diff, sc, connection);
             }
         }
-        System.out.println("Successfully created a new pool for " + actions.getSubName());
     }
 
     private static void deletePool(Scanner sc, Subjects subjects) {
@@ -158,7 +174,7 @@ public class Main {
     }
 
     // pool alteration menu
-    public static void alterPoolMenu(Scanner sc, Subjects subjects) {
+    public static void alterPoolMenu(Scanner sc, Subjects subjects, Connection connection) throws SQLException {
         int choice, poolIndex = -1;
         idGenerator(subjects);
         do {
@@ -181,10 +197,10 @@ public class Main {
                     System.out.println(a.questionsSeperatedFromAnswers());
                     break;
                 case 2: // add a new answer to pool
-                    printPlusAddAnswerToArray(a, sc);
+                    printPlusAddAnswerToArray(a, sc, connection);
                     break;
                 case 3: // add a new question to the pool
-                    printPlusAddQuestionToArray(a, sc);
+                    printPlusAddQuestionToArray(a, sc, connection);
                     break;
                 case 4: // delete question from the pool
                     printPlusDeleteQuestionFromArray(a, sc);
@@ -198,17 +214,18 @@ public class Main {
         } while (choice != 0);
     }
 
-    public static void printPlusAddAnswerToArray(Actions a, Scanner sc) {
+    public static void printPlusAddAnswerToArray(Actions a, Scanner sc, Connection connection) throws SQLException {
         System.out.println("Enter your new answer(string)");
         String strA = sc.next();
-        boolean check = a.addAnswerToArray(strA);
+
+        boolean check = a.addAnswerTextToPool(strA, a.getSubName(), connection);
         if (check)
             System.out.println("Successfully added a new answer to the pool");
         else
             System.out.println("Failed to add the answer, try again with a different answer");
     }
 
-    public static void printPlusAddQuestionToArray(Actions a, Scanner sc) {
+    public static void printPlusAddQuestionToArray(Actions a, Scanner sc, Connection connection) throws SQLException {
         System.out.println("Enter your new question (string):");
         String strQuestion = sc.next();
 
@@ -219,61 +236,71 @@ public class Main {
         boolean isOpen = sc.nextBoolean();
 
         if (isOpen) {
-            handleOpenQuestion(a, strQuestion, diff, sc);
+            handleOpenQuestion(a, strQuestion, diff, sc, connection);
         } else {
-            handleAmericanQuestion(a, strQuestion, diff, sc);
+            handleAmericanQuestion(a, strQuestion, diff, sc, connection);
         }
     }
 
     // Helper function
-    private static void handleOpenQuestion(Actions a, String strQuestion, Difficulty diff, Scanner sc) {
-        System.out.println(a.answerTextToString());
+    private static void handleOpenQuestion(String subject, String strQuestion, Difficulty diff, Scanner sc, Connection connection) throws SQLException {
+        System.out.println(Actions.answerTextToString(connection, subject));
         int choice = getAnswerChoice(sc);
-        AnswerText at;
+        //AnswerText at;
+        String answer;
         if (choice == 1) {
-            System.out.println(a.answerTextToString());
+            System.out.println(Actions.answerTextToString(connection, subject));
             System.out.println("Please enter the index of the answer for your open question:");
             int solutionIndex = sc.nextInt();
-            at = a.getAnswerTextArrayAtIndex(solutionIndex);
+            answer = Actions.getAnswerTextArrayAtIndex(connection, subject, solutionIndex);
         } else {
             System.out.println("Enter your new answer:");
-            String newAnswer = sc.next();
-            at = new AnswerText(newAnswer);
-            if (a.addAnswerToArray(newAnswer))
+            answer = sc.next();
+            if(!AnswerText.InsertToTable(connection, answer)) { // if it already exists in the AnswerText table it's fine(rowsAffected >= 0),
+                // if it was an exception, the user should try again.
+                System.out.println("An error occurred, please try again");
+                return;
+            }
+            if (Actions.addAnswerTextToPool(answer, subject, connection))
                 System.out.println("Successfully added a new answer to the pool");
             else
                 System.out.println("Failed to add the answer, try again with a different answer");
         }
-        Question oq = new OpenQuestion(strQuestion, at, diff);
 
-        boolean check = a.addQuestionToArray(oq);
-        if (check) {
-            System.out.println("Successfully added a new open question to the " + a.getSubName() + " pool.");
+        int newId = OpenQuestion.InsertToTable(connection, strQuestion, diff, answer);
+        if(newId == 0) { // if it already exists in the AnswerText table it's fine( > 0),
+                // if it was an exception(==0), the user should try again.
+                System.out.println("An error occurred, please try again");
+                return;
+        }
+
+        if (Actions.addQuestionToPool(connection, newId, subject)) {
+            System.out.println("Successfully added a new open question to the " + subject + " pool.");
         } else {
             System.out.println("Failed to add the open question, try again.");
         }
     }
 
     // Helper function
-    private static void handleAmericanQuestion(Actions a, String strQuestion, Difficulty diff, Scanner sc) {
+    private static void handleAmericanQuestion(String subject, String strQuestion, Difficulty diff, Scanner sc, Connection connection) throws SQLException {
         Question aq = new AmericanQuestion(strQuestion, diff);
 
         System.out.println("Enter how many answers do you want the question to have:");
         int ansAmount = sc.nextInt();
 
         while (aq.getAnswerCount() < ansAmount) {
-            addAnswerToAmericanQuestion(a, aq, sc);
+            addAnswerToAmericanQuestion(subject, aq, sc, connection);
         }
 
-        boolean check = a.addQuestionToArray(aq);
+        boolean check = subject.addQuestionToArray(aq);
         if (check) {
-            System.out.println("Successfully added a new American question to the " + a.getSubName() + " pool.");
+            System.out.println("Successfully added a new American question to the " + subject.getSubName() + " pool.");
         } else {
             System.out.println("Failed to add the American question, try again.");
         }
     }
 
-    public static void addAnswerToAmericanQuestion(Actions a, Question aq, Scanner sc) {
+    public static void addAnswerToAmericanQuestion(Actions a, Question aq, Scanner sc, Connection connection) throws SQLException {
         System.out.println(a.answerTextToString());
         int choice = getAnswerChoice(sc);
 
@@ -281,7 +308,7 @@ public class Main {
         if (choice == 1)
             checkAddAnswer = addAnswerFromPoolToAmericanQuestion(a, aq, sc);
         else
-            checkAddAnswer = addNewAnswerToAmericanQuestion(a, aq, sc);
+            checkAddAnswer = addNewAnswerToAmericanQuestion(a, aq, sc, connection);
 
         if (checkAddAnswer) {
             System.out.println("Successfully added your answer to the question.");
@@ -310,11 +337,11 @@ public class Main {
         return aq.addAnswerToQuestion(a.getAnswerTextArrayAtIndex(ansIndex), isTrue);
     }
 
-    private static boolean addNewAnswerToAmericanQuestion(Actions a, Question aq, Scanner sc) {
+    private static boolean addNewAnswerToAmericanQuestion(Actions a, Question aq, Scanner sc, Connection connection) throws SQLException {
         System.out.println("Enter your new answer:");
         String strA = sc.next();
 
-        if (a.addAnswerToArray(strA))
+        if (a.addAnswerTextToPool(strA, a.getSubName(), connection))
             System.out.println("Successfully added a new answer to the pool");
         else
             System.out.println("Failed to add the answer, try again with a different answer");

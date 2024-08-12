@@ -1,6 +1,9 @@
 package testing;
 
 import java.io.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -33,12 +36,20 @@ public class Subjects implements Serializable{
     }
 	
 	// adds a test to the data base
-	public boolean addPoolToArray(Actions a) {
-        for (Actions pool : pools)
-            if (pool.getSubName().equals(a.getSubName()))
-                return false;
-		pools.add(a);
-		return true;
+	public static boolean addPoolToArray(String subject, Connection connection) throws SQLException {
+        PreparedStatement pst = null;
+        boolean check;
+        try {
+            pst = connection.prepareStatement("INSERT INTO Actions VALUES (?)");
+            pst.setString(1, subject);
+            check = pst.executeUpdate() > 0;
+        } catch (SQLException e) {
+            return false;
+        } finally {
+            if(pst != null)
+                pst.close();
+        }
+        return check;
 	}
 
 	// deleted a question from the data base

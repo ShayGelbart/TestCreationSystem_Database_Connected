@@ -37,7 +37,7 @@ public class AutomaticExam implements Examable {
 							qToTest.addAnswerToQuestion(q.getAnswerByIndex(aRandIndex).getAnswer(), false);
 						q.deleteAnswerFromQuestion(aRandIndex);
 					}
-					c.addQuestionToArray(qToTest);
+					c.addQuestionToPool(qToTest);
 					b.deleteQuestionFromArray(qRandIndex);
 					t.addQuestionToTestArray(qArrayIndex);
 					qArrayIndex++;
