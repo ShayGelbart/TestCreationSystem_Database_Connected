@@ -136,7 +136,6 @@ public class Main {
         System.out.println("You've decided to create a new pool");
         System.out.println("Enter your new subject:");
         String subject = sc.next();
-        //Actions actions = new Actions(subject);
 
         if (!Subjects.addPoolToArray(subject, connection)) {
             System.out.println("Unable to create a new pool, try again");
