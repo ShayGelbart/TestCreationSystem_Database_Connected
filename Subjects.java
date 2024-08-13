@@ -3,40 +3,66 @@ package testing;
 import java.io.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class Subjects implements Serializable{
-	/**
-	 * 
-	 */
-	@Serial
-	private static final long serialVersionUID = 1L;
-	private ArrayList<Actions> pools;
+public class Subjects implements Serializable {
+    /**
+     *
+     */
+    @Serial
+    private static final long serialVersionUID = 1L;
+    private ArrayList<Actions> pools;
 
-	public Subjects() {
-		this.pools = new ArrayList<>();
-	}
-
-	public ArrayList<Actions> getPools() {
-		return pools;
-	}
-
-	public Actions getPoolsAtIndex(int index) {
-		return pools.get(index - 1);
-	}
-
-	public void setPools(ArrayList<Actions> pools) {
-		this.pools = pools;
-	}
-	
-	public int hashCode() {
-        return Objects.hash(pools);
+    public Subjects() {
+        this.pools = new ArrayList<>();
     }
-	
-	// adds a test to the data base
-	public static boolean addPoolToArray(String subject, Connection connection) throws SQLException {
+
+    public ArrayList<Actions> getPools() {
+        return pools;
+    }
+
+    public static String getPoolsAtIndex(int index, Connection connection) {
+        String subjectName = null;
+        PreparedStatement pst = null;
+        try {
+            // Step 1: Get the primary key (subjectName) of the row at the specified index
+            pst = connection.prepareStatement("SELECT subjectName FROM Actions LIMIT 1 OFFSET ?");
+            pst.setInt(1, index);
+            ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+                subjectName = rs.getString("subjectName");
+                rs.close();
+                pst.close();
+            }
+        }catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return subjectName;
+    }
+
+    public void setPools(ArrayList<Actions> pools) {
+        this.pools = pools;
+    }
+
+    public static int getAmountOfPools(Connection connection) throws SQLException {
+        try (PreparedStatement pst = connection.prepareStatement("SELECT COUNT(*) FROM Actions")) {
+            ResultSet rs = pst.executeQuery();
+            rs.next();
+            int result = rs.getInt(1);
+            rs.close();
+            pst.close();
+            return result;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    // adds a test to the data base
+    public static boolean addPoolToArray(String subject, Connection connection) throws SQLException {
         PreparedStatement pst = null;
         boolean check;
         try {
@@ -46,52 +72,91 @@ public class Subjects implements Serializable{
         } catch (SQLException e) {
             return false;
         } finally {
-            if(pst != null)
+            if (pst != null)
                 pst.close();
         }
         return check;
-	}
+    }
 
-	// deleted a question from the data base
-	public void deletePoolFromArray(int index) {
-		pools.remove(index - 1);
-	}
-	
-	// prints an entire test based on index
-		public String toStringSubjectByIndex(int index) {
-			return pools.get(index - 1).toString();
-		}
+    // deleted a question from the data base
+    public static boolean deletePoolFromArray(int index, Connection connection) throws SQLException {
+        PreparedStatement pst = null;
+        try {
+            // Step 1: Get the primary key (subjectName) of the row at the specified index
+            pst = connection.prepareStatement("SELECT subjectName FROM Actions LIMIT 1 OFFSET ?");
+            pst.setInt(1, index);
+            ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+                String subjectName = rs.getString("subjectName");
+                rs.close();
+                pst.close();
 
-	@SuppressWarnings("unchecked")
-	public void readFromBinaryFile() throws FileNotFoundException, IOException, ClassNotFoundException {
-		ObjectInputStream inFile = new ObjectInputStream(new FileInputStream("Subjects.dat"));
-		pools = (ArrayList<Actions>) inFile.readObject();
-		inFile.close();
-	}
-	
-	public void writeToBinaryFile() throws FileNotFoundException, IOException {
-		ObjectOutputStream outFile = new ObjectOutputStream(new FileOutputStream("Subjects.dat"));
-		outFile.writeObject(pools);
-		outFile.close();
-	}
-	
-	// prints the names of every subject which has a test
-	public String toStringSubjectNames() {
-		String str = "Names of every subject: \n";
-		int i = 0;
-        for (Actions pool : this.pools) {
-            str += (i + 1) + ")" + pool.getSubName() + "\n";
-            i++;
+                pst = connection.prepareStatement("DELETE FROM Actions WHERE subjectName = ?");
+                pst.setString(1, subjectName);
+                int rowsAffected = pst.executeUpdate();
+                pst.close();
+                return rowsAffected > 0; // Return true if deletion was successful
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (pst != null) {
+                pst.close();
+            }
         }
-		return str;
-	}
+        return false; // Return false if no row was deleted
+    }
 
-	// prints the entire data base's tests
-	public String toString() {
-		String str = "The entire data base:\n";
+
+    // prints an entire test based on index
+    public String toStringSubjectByIndex(int index) {
+        return pools.get(index - 1).toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    public void readFromBinaryFile() throws FileNotFoundException, IOException, ClassNotFoundException {
+        ObjectInputStream inFile = new ObjectInputStream(new FileInputStream("Subjects.dat"));
+        pools = (ArrayList<Actions>) inFile.readObject();
+        inFile.close();
+    }
+
+    public void writeToBinaryFile() throws FileNotFoundException, IOException {
+        ObjectOutputStream outFile = new ObjectOutputStream(new FileOutputStream("Subjects.dat"));
+        outFile.writeObject(pools);
+        outFile.close();
+    }
+
+    // prints the names of every subject which has a test
+    public static String toStringSubjectNames(Connection connection) throws SQLException {
+        String str = "Names of every subject: \n";
+        int i = 0;
+        PreparedStatement pst;
+        try {
+            pst = connection.prepareStatement("SELECT subjectName FROM Actions");
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                str += (i + 1) + ")" + rs.getString("subjectName") + "\n";
+                i++;
+            }
+            rs.close();
+            pst.close();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+            return null;
+        }
+        return str;
+    }
+
+    public int hashCode() {
+        return Objects.hash(pools);
+    }
+
+    // prints the entire data base's tests
+    public String toString() {
+        String str = "The entire data base:\n";
         for (Actions pool : this.pools) {
             str += pool.toString() + "\n";
         }
-		return str;
-	}
+        return str;
+    }
 }

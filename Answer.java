@@ -47,6 +47,7 @@ public class Answer implements Serializable {
             ResultSet rs = pst.executeQuery();
             rs.next();
             String answerText = rs.getString(1);
+            rs.close();
             pst.close();
             if (insertToTable(answerText, isTrue, connection))
                 return answerText;
@@ -61,6 +62,7 @@ public class Answer implements Serializable {
             pst.setString(1, answerText);
             pst.setBoolean(2, isTrue);
             pst.executeUpdate();
+            pst.close();
             return true;
         } catch (SQLException e) {
             e.printStackTrace();

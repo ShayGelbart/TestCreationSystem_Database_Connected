@@ -64,6 +64,8 @@ public abstract class Question implements Serializable {
                 str += i + ". " + options[i] + "\n";
                 i++;
             }
+            rs.close();
+            pst.close();
             options[3] = str;
             return options;
         } catch (SQLException e) {

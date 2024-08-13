@@ -41,7 +41,10 @@ public class AmericanQuestion extends Question {
             pst.setInt(1, qId);
             ResultSet rs = pst.executeQuery();
             rs.next();
-            return rs.getInt(1);
+            int res = rs.getInt(1);
+            rs.close();
+            pst.close();
+            return res;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -78,7 +81,9 @@ public class AmericanQuestion extends Question {
             pst = connection.prepareStatement("INSERT INTO AmericanQuestion (questionText, difficulty) VALUES (?, ?) RETURNING id;");
             pst.setString(1, strQuestion);
             pst.setString(2, diff);
-            return pst.executeUpdate();
+            int result = pst.executeUpdate();
+            pst.close();
+            return result;
         } catch (SQLException e) {
             e.printStackTrace();
             return 0;
@@ -90,7 +95,9 @@ public class AmericanQuestion extends Question {
         try (PreparedStatement pst = connection.prepareStatement("INSERT INTO QuestionAnswer VALUES (?, ?)")) {
             pst.setInt(1, qId);
             pst.setString(2, answerText);
-            return pst.executeUpdate();
+            int result = pst.executeUpdate();
+            pst.close();
+            return result;
         } catch (SQLException e) {
             return -1;
         }

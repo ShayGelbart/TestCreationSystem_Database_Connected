@@ -59,6 +59,8 @@ public class Actions implements Serializable {
             pst.setInt(2, index - 1);
             ResultSet rs = pst.executeQuery();
             rs.next();
+            rs.close();
+            pst.close();
             return rs.getString("answerText");
 
         } catch (SQLException e) {
@@ -85,6 +87,8 @@ public class Actions implements Serializable {
             pst.setString(1, subName);
             ResultSet rs = pst.executeQuery();
             rs.next();
+            rs.close();
+            pst.close();
             return rs.getInt(1);
         } catch (SQLException e) {
             return -1;
@@ -96,6 +100,8 @@ public class Actions implements Serializable {
             pst.setString(1, subName);
             ResultSet rs = pst.executeQuery();
             rs.next();
+            rs.close();
+            pst.close();
             return rs.getInt(1);
         } catch (SQLException e) {
             return -1;
@@ -104,11 +110,13 @@ public class Actions implements Serializable {
 
 
     // add answer to answer pool
-    public static int addAnswerTextToPool(String answerStr, String subName, Connection connection) throws SQLException {
+    public static int addAnswerTextToPool(String answerStr, String subjectName, Connection connection) throws SQLException {
         try (PreparedStatement pst = connection.prepareStatement("INSERT INTO AnswersPool VALUES (?, ?)")) {
             pst.setString(1, answerStr);
-            pst.setString(2, subName);
-            return pst.executeUpdate();
+            pst.setString(2, subjectName);
+            int result = pst.executeUpdate();
+            pst.close();
+            return result;
         } catch (SQLException e) {
             return -1;
         }
@@ -147,7 +155,9 @@ public class Actions implements Serializable {
         try (PreparedStatement pst = connection.prepareStatement("INSERT INTO QuestionsPool VALUES (?, ?)")) {
             pst.setInt(1, questionId);
             pst.setString(2, subject);
-            return pst.executeUpdate() > 0;
+            boolean result = pst.executeUpdate() > 0;
+            pst.close();
+            return result;
         } catch (SQLException e) {
             return false;
         }
@@ -196,6 +206,8 @@ public class Actions implements Serializable {
                 str += (i + 1) + ")" + rs.getString("answerText");
                 i++;
             }
+            rs.close();
+            pst.close();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
             return null;

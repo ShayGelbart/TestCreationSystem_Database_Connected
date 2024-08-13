@@ -33,7 +33,9 @@ public class AnswerText implements Serializable {
         try {
             pst = connection.prepareStatement("INSERT INTO Answertext (answerText) VALUES (?)");
             pst.setString(1, answer);
-            return pst.executeUpdate() >= 0;
+            boolean result = pst.executeUpdate() >= 0;
+            pst.close();
+            return result;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;

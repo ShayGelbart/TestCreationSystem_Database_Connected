@@ -7,8 +7,6 @@ import java.util.InputMismatchException;
 import java.util.Scanner;
 import java.sql.*;
 
-import testing.Question.Difficulty;
-
 public class Main {
 
     public static void main(String[] args)
@@ -28,11 +26,11 @@ public class Main {
             System.out.println(e.getMessage());
         }
         Subjects subjects = new Subjects();
-        File f = new File("Subjects.dat");
-        if (!f.exists())
-            f.createNewFile();
-        else if (f.length() > 0)
-            subjects.readFromBinaryFile();
+//        File f = new File("Subjects.dat");
+//        if (!f.exists())
+//            f.createNewFile();
+//        else if (f.length() > 0)
+//            subjects.readFromBinaryFile();
         int mainChoice;
         do {
             System.out.println("Welcome to the main menu");
@@ -61,7 +59,7 @@ public class Main {
 
     // test creation
     public static void testCreation(Scanner sc, Subjects subjects, Connection connection) throws
-            IOException, LessThanThreeAnswersException, AmountOfQuestionsException {
+            IOException, LessThanThreeAnswersException {
         if (subjects.getPools().isEmpty()) {
             System.out.println("There is no pool to make a test out of, create a pool first");
             return;
@@ -118,7 +116,7 @@ public class Main {
                     createAndDefineNewPool(sc, connection);
                     break;
                 case 2:
-                    deletePool(sc, subjects);
+                    deletePool(sc, connection);
                     break;
                 case 3:
                     alterPoolMenu(sc, subjects, connection);
@@ -164,29 +162,31 @@ public class Main {
         }
     }
 
-    private static void deletePool(Scanner sc, Subjects subjects) {
+    private static void deletePool(Scanner sc, Connection connection) throws SQLException {
         int delIndex;
-        System.out.println(subjects.toStringSubjectNames());
+        System.out.println(Subjects.toStringSubjectNames(connection));
         System.out.println("Enter which subject do you want to delete");
         do {
             delIndex = sc.nextInt();
-        } while (delIndex <= 0 || delIndex > subjects.getPools().size());
-        subjects.deletePoolFromArray(delIndex);
-        System.out.println("Successfully deleted the pool");
+        } while (delIndex <= 0 || delIndex > Subjects.getAmountOfPools(connection));
+        if(Subjects.deletePoolFromArray(delIndex, connection))
+            System.out.println("Successfully deleted the pool");
+        else
+        System.out.println("An error occurred, try again");
     }
 
     // pool alteration menu
-    public static void alterPoolMenu(Scanner sc, Subjects subjects, Connection connection) throws SQLException {
+    public static void alterPoolMenu(Scanner sc, Connection connection) throws SQLException {
         int choice, poolIndex = -1;
-        idGenerator(subjects);
+        //idGenerator(subjects);
         do {
             System.out.println("Welcome to the mini menu where you can alter the pool");
-            while (poolIndex <= 0 || poolIndex > subjects.getPools().size()) {
-                System.out.println(subjects.toStringSubjectNames());
+            while (poolIndex <= 0 || poolIndex > Subjects.getAmountOfPools(connection)) {
+                System.out.println(Subjects.toStringSubjectNames(connection));
                 System.out.println("Enter the index of the pool you would like to alter");
                 poolIndex = sc.nextInt();
             }
-            Actions a = subjects.getPoolsAtIndex(poolIndex);
+            String subjectName = Subjects.getPoolsAtIndex(poolIndex, connection);
             System.out.println("To see the entire pool(questions and then answers) type 1");
             System.out.println("To add an answer to the pool type 2");
             System.out.println("To add a question to the pool type 3");
@@ -196,16 +196,16 @@ public class Main {
             choice = sc.nextInt();
             switch (choice) { // alter the pool
                 case 1: // seeing the entire pool, question and then answers
-                    System.out.println(a.questionsSeperatedFromAnswers());
+                    System.out.println(subjectName.questionsSeperatedFromAnswers());
                     break;
                 case 2: // add a new answer to pool
-                    printPlusAddAnswerToArray(a, sc, connection);
+                    printPlusAddAnswerToArray(subjectName, sc, connection);
                     break;
                 case 3: // add a new question to the pool
-                    printPlusAddQuestionToArray(a, sc, connection);
+                    printPlusAddQuestionToArray(subjectName, sc, connection);
                     break;
                 case 4: // delete question from the pool
-                    printPlusDeleteQuestionFromArray(a, sc);
+                    printPlusDeleteQuestionFromArray(subjectName, sc);
                     break;
                 case 0: // exit back to main menu
                     System.out.println("You've decided to exit this menu");
@@ -216,31 +216,33 @@ public class Main {
         } while (choice != 0);
     }
 
-    public static void printPlusAddAnswerToArray(Actions a, Scanner sc, Connection connection) throws SQLException {
+    public static void printPlusAddAnswerToArray(String subject, Scanner sc, Connection connection) throws SQLException {
         System.out.println("Enter your new answer(string)");
         String strA = sc.next();
 
-        boolean check = a.addAnswerTextToPool(strA, a.getSubName(), connection);
-        if (check)
+        int check = Actions.addAnswerTextToPool(strA, subject, connection);
+        if (check == 1)
             System.out.println("Successfully added a new answer to the pool");
+        else if (check == 0)
+            System.out.println("Answer is already in the pool, try again with a different answer");
         else
-            System.out.println("Failed to add the answer, try again with a different answer");
+            System.out.println("An error occurred, try again");
     }
 
-    public static void printPlusAddQuestionToArray(Actions a, Scanner sc, Connection connection) throws SQLException {
+    public static void printPlusAddQuestionToArray(String subjectName, Scanner sc, Connection connection) throws SQLException {
         System.out.println("Enter your new question (string):");
         String strQuestion = sc.next();
 
-        Difficulty diff = defineDifficulty(sc);
+        String diff = defineDifficulty(sc, connection);
 
         System.out.println("Type true if you would like to add an open question.");
         System.out.println("Type false if you would like to add an American question.");
         boolean isOpen = sc.nextBoolean();
 
         if (isOpen) {
-            handleOpenQuestion(a, strQuestion, diff, sc, connection);
+            handleOpenQuestion(subjectName, strQuestion, diff, sc, connection);
         } else {
-            handleAmericanQuestion(a, strQuestion, diff, sc, connection);
+            handleAmericanQuestion(subjectName, strQuestion, diff, sc, connection);
         }
     }
 
@@ -268,7 +270,7 @@ public class Main {
             if (addAnswerToPoolCheck == 1) {
                 System.out.println("Successfully added a new answer to the pool");
             } else if (addAnswerToPoolCheck == 0) { // won't get kicked out, just sent with the answer already in DB
-                System.out.println("Answer is already in the pool, you will continue with that answer");
+                System.out.println("Answer is already in the pool, you will now continue with that answer");
             } else { // exception happened, kicked out of the function
                 System.out.println("An error occurred, please try again");
                 return;
@@ -317,9 +319,8 @@ public class Main {
             }
         }
 
-        boolean check = subject.addQuestionToArray(aq);
-        if (check) {
-            System.out.println("Successfully added a new American question to the " + subject.getSubName() + " pool.");
+        if (Actions.addQuestionToPool(connection, newId, subject)) {
+            System.out.println("Successfully added a new American question to the " + subject + " pool.");
         } else {
             System.out.println("Failed to add the American question, try again.");
         }
@@ -401,12 +402,12 @@ public class Main {
 
     public static String defineDifficulty(Scanner sc, Connection connection) throws SQLException {
         String options[] = Question.printDifficulty(connection);
-        System.out.println(options[3]);
+        System.out.println(options[options.length - 1]);
         int choice = sc.nextInt();
         sc.nextLine(); // Consume newline
 
         // Validate the choice
-        while (choice < 0 || choice >= options.length) {
+        while (choice < 0 || choice >= options.length - 1) {
             System.out.println("Try again to enter the index");
             choice = sc.nextInt();
         }
@@ -427,20 +428,20 @@ public class Main {
 //        else if (index == Difficulty.Medium.ordinal())
 //            return Difficulty.Medium;
 //        return Difficulty.Hard;
-}
 
-public static void idGenerator(Subjects ss) {
-    int idCount = 0;
-    for (int i = 1; i <= ss.getPools().size(); i++) {
-        for (int j = 1; j <= ss.getPoolsAtIndex(i).getQuestionArray().size(); j++) {
-            if (ss.getPoolsAtIndex(i).getQuestionArrayAtIndex(j).getId() > idCount)
-                idCount = ss.getPoolsAtIndex(i).getQuestionArrayAtIndex(j).getId();
+
+    public static void idGenerator(Subjects ss) {
+        int idCount = 0;
+        for (int i = 1; i <= ss.getPools().size(); i++) {
+            for (int j = 1; j <= ss.getPoolsAtIndex(i).getQuestionArray().size(); j++) {
+                if (ss.getPoolsAtIndex(i).getQuestionArrayAtIndex(j).getId() > idCount)
+                    idCount = ss.getPoolsAtIndex(i).getQuestionArrayAtIndex(j).getId();
+            }
         }
+
+        OpenQuestion q1 = new OpenQuestion(null, null, null);
+        q1.setStaticId(idCount + 1);
+
     }
-
-    OpenQuestion q1 = new OpenQuestion(null, null, null);
-    q1.setStaticId(idCount + 1);
-
-}
 
 }
