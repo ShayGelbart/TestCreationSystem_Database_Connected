@@ -336,11 +336,6 @@ public class Main {
             checkAddAnswer = addNewAnswerToAmericanQuestion(subjectName, id, sc, connection);
 
         return checkAddAnswer;
-//        if (checkAddAnswer) {
-//            System.out.println("Successfully added your answer to the question.");
-//        } else {
-//            System.out.println("Failed to add your answer, try again.");
-//        }
     }
 
     private static int getAnswerChoice(Scanner sc) {
@@ -359,13 +354,18 @@ public class Main {
 
         System.out.println("Is the answer true or false (true/false)?");
         boolean isTrue = sc.nextBoolean();
-        String answerText = Answer.insertToTable(ansIndex, isTrue, connection);
+        String answerText = Answer.insertToTableByIndex(ansIndex, isTrue, connection);
         return AmericanQuestion.addAnswerToQuestion(answerText, id, connection);
     }
 
-    private static boolean addNewAnswerToAmericanQuestion(String subject, int qId, Scanner sc, Connection connection) throws SQLException {
+    private static int addNewAnswerToAmericanQuestion(String subject, int qId, Scanner sc, Connection connection) throws SQLException {
         System.out.println("Enter your new answer:");
         String answerText = sc.next();
+
+        if (!AnswerText.InsertToTable(connection, answerText)) {
+            System.out.println("An error occurred, please try again");
+            return -1;
+        }
 
         int checkAddAnswer = Actions.addAnswerTextToPool(answerText, subject, connection);
         if (checkAddAnswer == 1) {
@@ -374,13 +374,18 @@ public class Main {
             System.out.println("Answer is already in the pool, you will continue with that answer");
         } else { // exception happened, kicked out of the function
             System.out.println("An error occurred, please try again");
-            return false;
+            return -1;
         }
 
         System.out.println("Is the answer true or false (true/false)?");
         boolean isTrue = sc.nextBoolean();
 
-        return AmericanQuestion.addAnswerToQuestion(answerText, isTrue);
+        if (!Answer.insertToTable(answerText, isTrue, connection)) {
+            System.out.println("An error occurred, please try again");
+            return -1;
+        }
+
+        return AmericanQuestion.addAnswerToQuestion(answerText, qId, connection);
     }
 
     public static void printPlusDeleteQuestionFromArray(Actions a, Scanner sc) {
@@ -395,35 +400,18 @@ public class Main {
     }
 
     public static String defineDifficulty(Scanner sc, Connection connection) throws SQLException {
-        PreparedStatement pst = null;
-        try {
-            pst = connection.prepareStatement("SELECT unnest(enum_range(NULL::difficulty))");
-            ResultSet rs = pst.executeQuery();
-            System.out.println("Enter the difficulty:");
-            int i = 0;
-            String[] options = new String[3]; // Assuming you have 3 difficulty levels
-            while (rs.next()) {
-                options[i] = rs.getString(1);
-                System.out.println(i + ". " + options[i]);
-                i++;
-            }
+        String options[] = Question.printDifficulty(connection);
+        System.out.println(options[3]);
+        int choice = sc.nextInt();
+        sc.nextLine(); // Consume newline
 
-            int choice = sc.nextInt();
-            sc.nextLine(); // Consume newline
-
-            // Validate the choice
-            while (choice < 0 || choice >= options.length) {
-                System.out.println("Try again to enter the index");
-                choice = sc.nextInt();
-            }
-            return options[choice];
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        } finally {
-            if (pst != null)
-                pst.close();
+        // Validate the choice
+        while (choice < 0 || choice >= options.length) {
+            System.out.println("Try again to enter the index");
+            choice = sc.nextInt();
         }
+        return options[choice];
+    }
 
 
 //        System.out.println("Enter how difficult is your question:(Easy, Medium, Hard)");
@@ -439,20 +427,20 @@ public class Main {
 //        else if (index == Difficulty.Medium.ordinal())
 //            return Difficulty.Medium;
 //        return Difficulty.Hard;
-    }
+}
 
-    public static void idGenerator(Subjects ss) {
-        int idCount = 0;
-        for (int i = 1; i <= ss.getPools().size(); i++) {
-            for (int j = 1; j <= ss.getPoolsAtIndex(i).getQuestionArray().size(); j++) {
-                if (ss.getPoolsAtIndex(i).getQuestionArrayAtIndex(j).getId() > idCount)
-                    idCount = ss.getPoolsAtIndex(i).getQuestionArrayAtIndex(j).getId();
-            }
+public static void idGenerator(Subjects ss) {
+    int idCount = 0;
+    for (int i = 1; i <= ss.getPools().size(); i++) {
+        for (int j = 1; j <= ss.getPoolsAtIndex(i).getQuestionArray().size(); j++) {
+            if (ss.getPoolsAtIndex(i).getQuestionArrayAtIndex(j).getId() > idCount)
+                idCount = ss.getPoolsAtIndex(i).getQuestionArrayAtIndex(j).getId();
         }
-
-        OpenQuestion q1 = new OpenQuestion(null, null, null);
-        q1.setStaticId(idCount + 1);
-
     }
+
+    OpenQuestion q1 = new OpenQuestion(null, null, null);
+    q1.setStaticId(idCount + 1);
+
+}
 
 }

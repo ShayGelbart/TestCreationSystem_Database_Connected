@@ -40,29 +40,32 @@ public class Answer implements Serializable {
         return answerText;
     }
 
-    public static String insertToTable(int ansIndex, boolean isTrue, Connection connection) throws SQLException {
-        PreparedStatement pst = null;
-        try {
-            pst = connection.prepareStatement("SELECT * FROM AnswerText LIMIT ? OFFSET ?");
-			pst.setInt(1, 1);
+    public static String insertToTableByIndex(int ansIndex, boolean isTrue, Connection connection) throws SQLException {
+        try (PreparedStatement pst = connection.prepareStatement("SELECT * FROM AnswerText LIMIT ? OFFSET ?")) {
+            pst.setInt(1, 1);
             pst.setInt(2, ansIndex - 1);
             ResultSet rs = pst.executeQuery();
             rs.next();
             String answerText = rs.getString(1);
             pst.close();
-            pst = connection.prepareStatement("INSERT INTO Answer VALUES (?, ?)");
+            if (insertToTable(answerText, isTrue, connection))
+                return answerText;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static boolean insertToTable(String answerText, boolean isTrue, Connection connection) throws SQLException {
+        try (PreparedStatement pst = connection.prepareStatement("INSERT INTO Answer VALUES (?, ?)")) {
             pst.setString(1, answerText);
             pst.setBoolean(2, isTrue);
             pst.executeUpdate();
-            return answerText;
+            return true;
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (pst != null) {
-                pst.close();
-            }
         }
-        return null;
+        return false;
     }
 
     public int hashCode() {
