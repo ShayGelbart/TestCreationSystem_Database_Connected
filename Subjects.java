@@ -82,7 +82,6 @@ public class Subjects implements Serializable {
     public static boolean deletePoolFromArray(int index, Connection connection) throws SQLException {
         PreparedStatement pst = null;
         try {
-            // Step 1: Get the primary key (subjectName) of the row at the specified index
             pst = connection.prepareStatement("SELECT subjectName FROM Actions LIMIT 1 OFFSET ?");
             pst.setInt(1, index);
             ResultSet rs = pst.executeQuery();
@@ -93,9 +92,9 @@ public class Subjects implements Serializable {
 
                 pst = connection.prepareStatement("DELETE FROM Actions WHERE subjectName = ?");
                 pst.setString(1, subjectName);
-                int rowsAffected = pst.executeUpdate();
+                boolean result = pst.executeUpdate() > 0;
                 pst.close();
-                return rowsAffected > 0; // Return true if deletion was successful
+                return result;
             }
         } catch (SQLException e) {
             e.printStackTrace();
