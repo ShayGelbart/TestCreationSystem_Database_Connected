@@ -1,6 +1,5 @@
 package testing;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.util.InputMismatchException;
@@ -196,7 +195,7 @@ public class Main {
             choice = sc.nextInt();
             switch (choice) { // alter the pool
                 case 1: // seeing the entire pool, question and then answers
-                    System.out.println(subjectName.questionsSeperatedFromAnswers());
+                    System.out.println(Actions.questionsSeperatedFromAnswers(connection));
                     break;
                 case 2: // add a new answer to pool
                     printPlusAddAnswerToArray(subjectName, sc, connection);
@@ -248,12 +247,12 @@ public class Main {
 
     // Helper function
     private static void handleOpenQuestion(String subject, String strQuestion, String diff, Scanner sc, Connection connection) throws SQLException {
-        System.out.println(Actions.answerTextToString(connection, subject));
+        System.out.println(Actions.answerTextPoolToString(connection, subject));
         int choice = getAnswerChoice(sc);
         //AnswerText at;
         String answer;
         if (choice == 1) {
-            System.out.println(Actions.answerTextToString(connection, subject));
+            System.out.println(Actions.answerTextPoolToString(connection, subject));
             System.out.println("Please enter the index of the answer for your open question:");
             int solutionIndex = sc.nextInt();
             answer = Actions.getAnswerTextArrayAtIndex(connection, subject, solutionIndex);
@@ -327,7 +326,7 @@ public class Main {
     }
 
     public static int addAnswerToAmericanQuestion(String subjectName, int id, Scanner sc, Connection connection) throws SQLException {
-        System.out.println(Actions.answerTextToString(connection, subjectName));
+        System.out.println(Actions.answerTextPoolToString(connection, subjectName));
         int choice = getAnswerChoice(sc);
 
         int checkAddAnswer;
@@ -349,7 +348,7 @@ public class Main {
     }
 
     private static int addAnswerFromPoolToAmericanQuestion(String subject, int id, Scanner sc, Connection connection) throws SQLException {
-        System.out.println(Actions.answerTextToString(connection, subject));
+        System.out.println(Actions.answerTextPoolToString(connection, subject));
         System.out.println("Enter the answer's index:");
         int ansIndex = sc.nextInt();
 
@@ -390,7 +389,7 @@ public class Main {
     }
 
     public static void printPlusDeleteQuestionFromArray(Actions a, Scanner sc) {
-        System.out.println(a.questionArrayToString());
+        System.out.println(a.questionPoolToString());
         System.out.println("Enter the number of the question you want to delete");
         int index = sc.nextInt();
         boolean check = a.deleteQuestionFromArray(index);

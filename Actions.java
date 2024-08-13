@@ -194,7 +194,7 @@ public class Actions implements Serializable {
     }
 
     // prints the answers text from the pool
-    public static String answerTextToString(Connection connection, String subName) throws SQLException {
+    public static String answerTextPoolToString(Connection connection, String subName) throws SQLException {
         int i = 0;
         String str = "Here is the answer pool:" + "\n";
         PreparedStatement pst = null;
@@ -219,7 +219,7 @@ public class Actions implements Serializable {
     }
 
     // prints the questions text from the pool
-    public String questionArrayToString() {
+    public String questionPoolToString() {
         int i = 0;
         String str = "Here is the question pool:\n\n";
         for (Question q : this.questionArray) {
@@ -232,8 +232,8 @@ public class Actions implements Serializable {
         return str;
     }
 
-    public String questionsSeperatedFromAnswers() {
-        return questionArrayToString() + "\n" + answerTextToString();
+    public String questionsSeperatedFromAnswers(Connection connection, String subjectName) throws SQLException {
+        return questionPoolToString(subjectName, connection) + "\n" + answerTextPoolToString(connection, subjectName);
     }
 
     // prints the questions with their answers
