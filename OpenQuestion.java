@@ -27,12 +27,13 @@ public class OpenQuestion extends Question {
     }
 
     // returns int so the Id will be passed to another function later on
-    public static int InsertToTable(Connection connection, String strQuestion, Difficulty diff, String answer) {
+    public static int InsertToTable(Connection connection, String strQuestion, String diff, String answer) {
         PreparedStatement pst = null;
         try {
-            pst = connection.prepareStatement("INSERT INTO OpenQuestion (schoolSolution, questionText, difficulty) VALUES (?, ?, diff) RETURNING id;");
+            pst = connection.prepareStatement("INSERT INTO OpenQuestion (schoolSolution, questionText, difficulty) VALUES (?, ?, ?) RETURNING id;");
             pst.setString(1, answer);
             pst.setString(2, strQuestion);
+            pst.setString(3, diff);
             return pst.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

@@ -64,18 +64,4 @@ public abstract class Question implements Serializable {
 	public String toString() {
 		return "Id-" + id + "\nQuestion text-" + questionText;
 	}
-
-	// functions that are overridden
-	public abstract int getAnswerCount();
-
-	public abstract boolean addAnswerToQuestion(AnswerText answerText, boolean answerIsTrue);
-
-	public abstract boolean deleteAnswerFromQuestion(int indexAnswer);
-
-	public abstract void deleteAllAnswers();
-
-	public abstract Answer getAnswerByIndex(int index);
-
-	public abstract String questionWithAnswersToString();
-
 }

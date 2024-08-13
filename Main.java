@@ -149,8 +149,11 @@ public class Main {
         while (Actions.getAmountOfQuestionsInSubjectPool(connection, subject) < numOfQuestions) {
             System.out.println("Enter the question's text:");
             String qText = sc.next();
-            Difficulty diff = defineDifficulty(sc);
-
+            String diff = defineDifficulty(sc, connection);
+            if (diff == null) {
+                System.out.println("An error occurred, try again");
+                return;
+            }
             System.out.println("Type true if you would like to add an open question, false for an American question:");
             boolean isOpen = sc.nextBoolean();
             if (isOpen) {
@@ -242,7 +245,7 @@ public class Main {
     }
 
     // Helper function
-    private static void handleOpenQuestion(String subject, String strQuestion, Difficulty diff, Scanner sc, Connection connection) throws SQLException {
+    private static void handleOpenQuestion(String subject, String strQuestion, String diff, Scanner sc, Connection connection) throws SQLException {
         System.out.println(Actions.answerTextToString(connection, subject));
         int choice = getAnswerChoice(sc);
         //AnswerText at;
@@ -255,22 +258,28 @@ public class Main {
         } else {
             System.out.println("Enter your new answer:");
             answer = sc.next();
-            if(!AnswerText.InsertToTable(connection, answer)) { // if it already exists in the AnswerText table it's fine(rowsAffected >= 0),
+            if (!AnswerText.InsertToTable(connection, answer)) { // if it already exists in the AnswerText table it's fine(rowsAffected >= 0),
                 // if it was an exception, the user should try again.
                 System.out.println("An error occurred, please try again");
                 return;
             }
-            if (Actions.addAnswerTextToPool(answer, subject, connection))
+
+            int addAnswerToPoolCheck = Actions.addAnswerTextToPool(answer, subject, connection);
+            if (addAnswerToPoolCheck == 1) {
                 System.out.println("Successfully added a new answer to the pool");
-            else
-                System.out.println("Failed to add the answer, try again with a different answer");
+            } else if (addAnswerToPoolCheck == 0) { // won't get kicked out, just sent with the answer already in DB
+                System.out.println("Answer is already in the pool, you will continue with that answer");
+            } else { // exception happened, kicked out of the function
+                System.out.println("An error occurred, please try again");
+                return;
+            }
         }
 
         int newId = OpenQuestion.InsertToTable(connection, strQuestion, diff, answer);
-        if(newId == 0) { // if it already exists in the AnswerText table it's fine( > 0),
-                // if it was an exception(==0), the user should try again.
-                System.out.println("An error occurred, please try again");
-                return;
+        if (newId == 0) { // if it already exists in the AnswerText table it's fine( > 0),
+            // if it was an exception(==0), the user should try again.
+            System.out.println("An error occurred, please try again");
+            return;
         }
 
         if (Actions.addQuestionToPool(connection, newId, subject)) {
@@ -281,14 +290,31 @@ public class Main {
     }
 
     // Helper function
-    private static void handleAmericanQuestion(String subject, String strQuestion, Difficulty diff, Scanner sc, Connection connection) throws SQLException {
-        Question aq = new AmericanQuestion(strQuestion, diff);
+    private static void handleAmericanQuestion(String subject, String strQuestion, String diff, Scanner sc, Connection connection) throws SQLException {
+        //Question aq = new AmericanQuestion(strQuestion, diff);
+        int newId = AmericanQuestion.InsertToTable(connection, strQuestion, diff), returnValue, ansAmount;
+        if (newId == 0) { // if it already exists in the AnswerText table it's fine( > 0),
+            // if it was an exception(==0), the user should try again.
+            System.out.println("An error occurred, please try again");
+            return;
+        }
 
-        System.out.println("Enter how many answers do you want the question to have:");
-        int ansAmount = sc.nextInt();
+        do {
+            System.out.println("Enter how many answers do you want the question to have:");
+            ansAmount = sc.nextInt(); // user input
+        } while (ansAmount < 0);
 
-        while (aq.getAnswerCount() < ansAmount) {
-            addAnswerToAmericanQuestion(subject, aq, sc, connection);
+
+        while (ansAmount > 0) {
+            returnValue = addAnswerToAmericanQuestion(subject, newId, sc, connection);
+            if (returnValue == -1) { // exception
+                System.out.println("An error occurred, please try again");
+            } else if (returnValue == 0) { // question already has that answer
+                System.out.println("Answer already exists, please try again");
+            } else {// new answer added
+                ansAmount--;
+                System.out.println("Answer was successfully added to the question");
+            }
         }
 
         boolean check = subject.addQuestionToArray(aq);
@@ -299,21 +325,22 @@ public class Main {
         }
     }
 
-    public static void addAnswerToAmericanQuestion(Actions a, Question aq, Scanner sc, Connection connection) throws SQLException {
-        System.out.println(a.answerTextToString());
+    public static int addAnswerToAmericanQuestion(String subjectName, int id, Scanner sc, Connection connection) throws SQLException {
+        System.out.println(Actions.answerTextToString(connection, subjectName));
         int choice = getAnswerChoice(sc);
 
-        boolean checkAddAnswer;
+        int checkAddAnswer;
         if (choice == 1)
-            checkAddAnswer = addAnswerFromPoolToAmericanQuestion(a, aq, sc);
+            checkAddAnswer = addAnswerFromPoolToAmericanQuestion(subjectName, id, sc, connection);
         else
-            checkAddAnswer = addNewAnswerToAmericanQuestion(a, aq, sc, connection);
+            checkAddAnswer = addNewAnswerToAmericanQuestion(subjectName, id, sc, connection);
 
-        if (checkAddAnswer) {
-            System.out.println("Successfully added your answer to the question.");
-        } else {
-            System.out.println("Failed to add your answer, try again.");
-        }
+        return checkAddAnswer;
+//        if (checkAddAnswer) {
+//            System.out.println("Successfully added your answer to the question.");
+//        } else {
+//            System.out.println("Failed to add your answer, try again.");
+//        }
     }
 
     private static int getAnswerChoice(Scanner sc) {
@@ -325,30 +352,35 @@ public class Main {
         return choice;
     }
 
-    private static boolean addAnswerFromPoolToAmericanQuestion(Actions a, Question aq, Scanner sc) {
-        System.out.println(a.answerTextToString());
+    private static int addAnswerFromPoolToAmericanQuestion(String subject, int id, Scanner sc, Connection connection) throws SQLException {
+        System.out.println(Actions.answerTextToString(connection, subject));
         System.out.println("Enter the answer's index:");
         int ansIndex = sc.nextInt();
 
         System.out.println("Is the answer true or false (true/false)?");
         boolean isTrue = sc.nextBoolean();
-
-        return aq.addAnswerToQuestion(a.getAnswerTextArrayAtIndex(ansIndex), isTrue);
+        String answerText = Answer.insertToTable(ansIndex, isTrue, connection);
+        return AmericanQuestion.addAnswerToQuestion(answerText, id, connection);
     }
 
-    private static boolean addNewAnswerToAmericanQuestion(Actions a, Question aq, Scanner sc, Connection connection) throws SQLException {
+    private static boolean addNewAnswerToAmericanQuestion(String subject, int qId, Scanner sc, Connection connection) throws SQLException {
         System.out.println("Enter your new answer:");
-        String strA = sc.next();
+        String answerText = sc.next();
 
-        if (a.addAnswerTextToPool(strA, a.getSubName(), connection))
+        int checkAddAnswer = Actions.addAnswerTextToPool(answerText, subject, connection);
+        if (checkAddAnswer == 1) {
             System.out.println("Successfully added a new answer to the pool");
-        else
-            System.out.println("Failed to add the answer, try again with a different answer");
+        } else if (checkAddAnswer == 0) { // won't get kicked out, just sent with the answer already in DB
+            System.out.println("Answer is already in the pool, you will continue with that answer");
+        } else { // exception happened, kicked out of the function
+            System.out.println("An error occurred, please try again");
+            return false;
+        }
 
         System.out.println("Is the answer true or false (true/false)?");
         boolean isTrue = sc.nextBoolean();
 
-        return aq.addAnswerToQuestion(new AnswerText(strA), isTrue);
+        return AmericanQuestion.addAnswerToQuestion(answerText, isTrue);
     }
 
     public static void printPlusDeleteQuestionFromArray(Actions a, Scanner sc) {
@@ -362,21 +394,51 @@ public class Main {
             System.out.println("Failed to delete question from array, try with a different index");
     }
 
-    public static Difficulty defineDifficulty(Scanner sc) {
-        System.out.println("Enter how difficult is your question:(Easy, Medium, Hard)");
-        System.out.println("For Easy enter " + Difficulty.Easy.ordinal());
-        System.out.println("For Medium enter " + Difficulty.Medium.ordinal());
-        System.out.println("For Hard enter " + Difficulty.Hard.ordinal());
-        int index = sc.nextInt();
-        while (index < Difficulty.Easy.ordinal() || index > Difficulty.Hard.ordinal()) {
-            System.out.println("Try again to enter the index");
-            index = sc.nextInt();
+    public static String defineDifficulty(Scanner sc, Connection connection) throws SQLException {
+        PreparedStatement pst = null;
+        try {
+            pst = connection.prepareStatement("SELECT unnest(enum_range(NULL::difficulty))");
+            ResultSet rs = pst.executeQuery();
+            System.out.println("Enter the difficulty:");
+            int i = 0;
+            String[] options = new String[3]; // Assuming you have 3 difficulty levels
+            while (rs.next()) {
+                options[i] = rs.getString(1);
+                System.out.println(i + ". " + options[i]);
+                i++;
+            }
+
+            int choice = sc.nextInt();
+            sc.nextLine(); // Consume newline
+
+            // Validate the choice
+            while (choice < 0 || choice >= options.length) {
+                System.out.println("Try again to enter the index");
+                choice = sc.nextInt();
+            }
+            return options[choice];
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            if (pst != null)
+                pst.close();
         }
-        if (index == Difficulty.Easy.ordinal())
-            return Difficulty.Easy;
-        else if (index == Difficulty.Medium.ordinal())
-            return Difficulty.Medium;
-        return Difficulty.Hard;
+
+
+//        System.out.println("Enter how difficult is your question:(Easy, Medium, Hard)");
+//        System.out.println("For Easy enter " + Difficulty.Easy.ordinal());
+//        System.out.println("For Medium enter " + Difficulty.Medium.ordinal());
+//        System.out.println("For Hard enter " + Difficulty.Hard.ordinal());
+//        int index = sc.nextInt();
+//        while (index < Difficulty.Easy.ordinal() || index > Difficulty.Hard.ordinal()) {
+//
+//        }
+//        if (index == Difficulty.Easy.ordinal())
+//            return Difficulty.Easy;
+//        else if (index == Difficulty.Medium.ordinal())
+//            return Difficulty.Medium;
+//        return Difficulty.Hard;
     }
 
     public static void idGenerator(Subjects ss) {

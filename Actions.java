@@ -54,8 +54,9 @@ public class Actions implements Serializable {
     public static String getAnswerTextArrayAtIndex(Connection connection, String subName, int index) {
         PreparedStatement pst = null;
         try {
-            pst = connection.prepareStatement("SELECT * FROM AnswersPool WHERE subjectName LIKE ? LIMIT 1 OFFSET (index - 1)");
+            pst = connection.prepareStatement("SELECT * FROM AnswersPool WHERE subjectName LIKE ? LIMIT 1 OFFSET ?");
             pst.setString(1, subName);
+            pst.setInt(2, index - 1);
             ResultSet rs = pst.executeQuery();
             rs.next();
             return rs.getString("answerText");
@@ -80,8 +81,8 @@ public class Actions implements Serializable {
     }
 
     public static int getAmountOfQuestionsInSubjectPool(Connection connection, String subName) throws SQLException {
-        boolean check;
-        try (PreparedStatement pst = connection.prepareStatement("SELECT COUNT(*) FROM QuestionsPool WHERE subjectName LIKE subName")) {
+        try (PreparedStatement pst = connection.prepareStatement("SELECT COUNT(*) FROM QuestionsPool WHERE subjectName LIKE ?")) {
+            pst.setString(1, subName);
             ResultSet rs = pst.executeQuery();
             rs.next();
             return rs.getInt(1);
@@ -90,14 +91,26 @@ public class Actions implements Serializable {
         }
     }
 
+    public static int getAmountOfAnswersInSubjectPool(Connection connection, String subName) throws SQLException {
+        try (PreparedStatement pst = connection.prepareStatement("SELECT COUNT(*) FROM AnswersPool WHERE subjectName LIKE ?")) {
+            pst.setString(1, subName);
+            ResultSet rs = pst.executeQuery();
+            rs.next();
+            return rs.getInt(1);
+        } catch (SQLException e) {
+            return -1;
+        }
+    }
+
+
     // add answer to answer pool
-    public static boolean addAnswerTextToPool(String answerStr, String subName, Connection connection) throws SQLException {
+    public static int addAnswerTextToPool(String answerStr, String subName, Connection connection) throws SQLException {
         try (PreparedStatement pst = connection.prepareStatement("INSERT INTO AnswersPool VALUES (?, ?)")) {
             pst.setString(1, answerStr);
             pst.setString(2, subName);
-            return pst.executeUpdate() > 0;
+            return pst.executeUpdate();
         } catch (SQLException e) {
-            return false;
+            return -1;
         }
     }
 
@@ -131,7 +144,7 @@ public class Actions implements Serializable {
 
     // add question to pool
     public static boolean addQuestionToPool(Connection connection, int questionId, String subject) {
-         try (PreparedStatement pst = connection.prepareStatement("INSERT INTO QuestionsPool VALUES (?, ?)")) {
+        try (PreparedStatement pst = connection.prepareStatement("INSERT INTO QuestionsPool VALUES (?, ?)")) {
             pst.setInt(1, questionId);
             pst.setString(2, subject);
             return pst.executeUpdate() > 0;
@@ -185,6 +198,7 @@ public class Actions implements Serializable {
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
+            return null;
         }
 
         if (i == 0)
