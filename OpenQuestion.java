@@ -2,6 +2,7 @@ package testing;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class OpenQuestion extends Question {
@@ -41,6 +42,23 @@ public class OpenQuestion extends Question {
             e.printStackTrace();
             return 0;
         }
+    }
+
+    public static String getOpenQuestionSolution(Connection connection, int questionId) throws SQLException {
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        try {
+            pst = connection.prepareStatement("SELECT schoolSolution FROM OpenQuestion WHERE id = ?");
+            pst.setInt(1, questionId);
+            rs = pst.executeQuery();
+            if (rs.next()) {
+                return "Solution: " + rs.getString("schoolSolution") + "\n";
+            }
+        } finally {
+            if (rs != null) rs.close();
+            if (pst != null) pst.close();
+        }
+        return "";
     }
 
     public String testToString() {

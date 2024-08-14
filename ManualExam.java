@@ -15,41 +15,50 @@ public class ManualExam implements Examable {
     @Override
     public boolean createExam(String subjectName, int numOfQuestions, Connection connection) {
         try {
-            int qIndex, testId = Test.insertToTable(connection, subjectName);
+            int qIndex, testId = Test.insertToTable(connection, subjectName), qId;
             //Actions b = new Actions(a);
             //Test t = new Test(subjectName);
-            if(testId == 0) {
+            if (testId == 0) {
                 System.out.println("An error occurred, please try again");
                 return false;
             }
             System.out.println(Actions.questionsSeperatedFromAnswers(connection, subjectName));
-            while (Test.getTestQuestions() < numOfQuestions) {
+            int numOfQuestionsInPool;
+            while (numOfQuestions > 0) {
                 do {
                     System.out.println("Enter the question's index which you want to add to the test");
                     qIndex = sc.nextInt();
-                } while (qIndex <= 0 || qIndex > b.getQuestionArray().size());
+                    numOfQuestionsInPool = Actions.getAmountOfQuestionsInSubjectPool(connection, subjectName);
+                    if (numOfQuestionsInPool == -1)
+                        System.out.println("An error occurred, please try again");
+                } while ((qIndex <= 0 || qIndex > numOfQuestionsInPool));
 
-                if (b.getQuestionArrayAtIndex(qIndex) instanceof AmericanQuestion) {
-                    if (b.getQuestionArrayAtIndex(qIndex).getAnswerCount() <= 3)
-                        throw new LessThanThreeAnswersException();
+                qId = Actions.getQuestionArrayAtIndex(qIndex, connection, subjectName);
+                if (Actions.isQuestionType(connection, qId, "AmericanQuestion") && AmericanQuestion.getAnswerCount(connection, qId) <= 3) {
+                    throw new LessThanThreeAnswersException();
                 }
 
-                if (t.addQuestionToTestArray(qIndex))
+                int resAddToTest = Test.addQuestionToTestArray(testId, qId, connection);
+                if (resAddToTest == 1)
                     System.out.println("Successfully added the question to the test");
-                else
-                    System.out.println("Failed to add the question to the test, try again with a different question");
+                else if (resAddToTest == 0)
+                    System.out.println("Question is already in the test, try again with a different question");
+                else {
+                    System.out.println("An error occurred, please try again");
+                    return false;
+                }
             }
 
             LocalDateTime now = LocalDateTime.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_hh_mm");
-            String fileName = now.format(formatter) + "_Manual_" + t.getSubName();
+            String fileName = now.format(formatter) + "_Manual_" + subjectName;
             String fileNameExam = fileName + "_exam.txt";
             String fileNameSolution = fileName + "_solution.txt";
 
             File exam = new File(fileNameExam);
             exam.createNewFile();
             PrintWriter pw = new PrintWriter(exam);
-            pw.print(t.manualFileAddedAnswersToString());
+            pw.print(Test.manualFileAddedAnswersToString());
             pw.close();
 
             File solution = new File(fileNameSolution);

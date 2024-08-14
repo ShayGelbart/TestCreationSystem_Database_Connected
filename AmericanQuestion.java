@@ -139,6 +139,26 @@ public class AmericanQuestion extends Question {
         return str;
     }
 
+    public static String getAmericanQuestionAnswers(Connection connection, int questionId) throws SQLException {
+        String str = "Answers:\n";
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        int i = 1;
+        try {
+            pst = connection.prepareStatement("SELECT answerText FROM QuestionAnswer WHERE questionId = ?");
+            pst.setInt(1, questionId);
+            rs = pst.executeQuery();
+            while (rs.next()) {
+                str += i + ")" + rs.getString("answerText") + "\n";
+                i++;
+            }
+        } finally {
+            if (rs != null) rs.close();
+            if (pst != null) pst.close();
+        }
+        return str;
+    }
+
     public String toString() {
         int i = 0;
         StringBuilder str = new StringBuilder(super.toString() + "\n(American question) \n");
