@@ -118,7 +118,7 @@ public class Main {
                     deletePool(sc, connection);
                     break;
                 case 3:
-                    alterPoolMenu(sc, subjects, connection);
+                    alterPoolMenu(sc, connection);
                     break;
                 case 0:
                     System.out.println("Goodbye,have a good day:)");
@@ -164,14 +164,14 @@ public class Main {
     private static void deletePool(Scanner sc, Connection connection) throws SQLException {
         int delIndex;
         System.out.println(Subjects.toStringSubjectNames(connection));
-        System.out.println("Enter which subject do you want to delete");
         do {
+            System.out.println("Enter the index of the subject you want to delete");
             delIndex = sc.nextInt();
         } while (delIndex <= 0 || delIndex > Subjects.getAmountOfPools(connection));
-        if(Subjects.deletePoolFromArray(delIndex, connection))
+        if (Subjects.deletePoolFromArray(delIndex, connection))
             System.out.println("Successfully deleted the pool");
         else
-        System.out.println("An error occurred, try again");
+            System.out.println("An error occurred, try again");
     }
 
     // pool alteration menu
@@ -195,7 +195,7 @@ public class Main {
             choice = sc.nextInt();
             switch (choice) { // alter the pool
                 case 1: // seeing the entire pool, question and then answers
-                    System.out.println(Actions.questionsSeperatedFromAnswers(connection));
+                    System.out.println(Actions.questionsSeperatedFromAnswers(connection, subjectName));
                     break;
                 case 2: // add a new answer to pool
                     printPlusAddAnswerToArray(subjectName, sc, connection);
@@ -204,7 +204,7 @@ public class Main {
                     printPlusAddQuestionToArray(subjectName, sc, connection);
                     break;
                 case 4: // delete question from the pool
-                    printPlusDeleteQuestionFromArray(subjectName, sc);
+                    printPlusDeleteQuestionFromArray(subjectName, connection, sc);
                     break;
                 case 0: // exit back to main menu
                     System.out.println("You've decided to exit this menu");
@@ -388,12 +388,11 @@ public class Main {
         return AmericanQuestion.addAnswerToQuestion(answerText, qId, connection);
     }
 
-    public static void printPlusDeleteQuestionFromArray(Actions a, Scanner sc) {
-        System.out.println(a.questionPoolToString());
-        System.out.println("Enter the number of the question you want to delete");
+    public static void printPlusDeleteQuestionFromArray(String subjectName, Connection connection, Scanner sc) throws SQLException {
+        System.out.println(Actions.questionPoolToString(subjectName, connection));
+        System.out.println("Enter the index of the question you want to delete");
         int index = sc.nextInt();
-        boolean check = a.deleteQuestionFromArray(index);
-        if (check)
+        if (Actions.deleteQuestionFromArray(index, connection))
             System.out.println("Successfully deleted question number-" + index);
         else
             System.out.println("Failed to delete question from array, try with a different index");
@@ -429,18 +428,18 @@ public class Main {
 //        return Difficulty.Hard;
 
 
-    public static void idGenerator(Subjects ss) {
-        int idCount = 0;
-        for (int i = 1; i <= ss.getPools().size(); i++) {
-            for (int j = 1; j <= ss.getPoolsAtIndex(i).getQuestionArray().size(); j++) {
-                if (ss.getPoolsAtIndex(i).getQuestionArrayAtIndex(j).getId() > idCount)
-                    idCount = ss.getPoolsAtIndex(i).getQuestionArrayAtIndex(j).getId();
-            }
-        }
-
-        OpenQuestion q1 = new OpenQuestion(null, null, null);
-        q1.setStaticId(idCount + 1);
-
-    }
+//    public static void idGenerator(Subjects ss) {
+//        int idCount = 0;
+//        for (int i = 1; i <= ss.getPools().size(); i++) {
+//            for (int j = 1; j <= ss.getPoolsAtIndex(i).getQuestionArray().size(); j++) {
+//                if (ss.getPoolsAtIndex(i).getQuestionArrayAtIndex(j).getId() > idCount)
+//                    idCount = ss.getPoolsAtIndex(i).getQuestionArrayAtIndex(j).getId();
+//            }
+//        }
+//
+//        OpenQuestion q1 = new OpenQuestion(null, null, null);
+//        q1.setStaticId(idCount + 1);
+//
+//    }
 
 }

@@ -83,7 +83,7 @@ public class Subjects implements Serializable {
         PreparedStatement pst = null;
         try {
             pst = connection.prepareStatement("SELECT subjectName FROM Actions LIMIT 1 OFFSET ?");
-            pst.setInt(1, index);
+            pst.setInt(1, index - 1);
             ResultSet rs = pst.executeQuery();
             if (rs.next()) {
                 String subjectName = rs.getString("subjectName");
