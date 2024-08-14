@@ -17,7 +17,7 @@ public class Main {
             String dbUrl = "jdbc:postgresql:TestCreation";
             connection = DriverManager.getConnection(dbUrl, "postgres", "shay0307");
             Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM Actions");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM Pool");
             while (rs.next()) {
                 System.out.println("- " + rs.getString("subjectName"));
             }
@@ -86,18 +86,16 @@ public class Main {
                 System.out.println("Invalid input. Please enter a valid number.");
                 sc.next(); // Clear the invalid input from the scanner
             }
-        } while (numOfQuestions > 10 || numOfQuestions <= 0 || numOfQuestions > Actions.getAmountOfQuestionsInSubjectPool(connection, subjectName));
+        } while (numOfQuestions > 10 || numOfQuestions <= 0 || numOfQuestions > Pool.getAmountOfQuestionsInSubjectPool(connection, subjectName));
         System.out.println("Do you want to create an automatic test or making it manually?");
         System.out.println("Enter true for automatic, false for manual");
-        boolean check, isAuto = sc.nextBoolean();
+        boolean isAuto = sc.nextBoolean();
         if (isAuto) {
             test = new AutomaticExam();
-            check = test.createExam(a, numOfQuestions);
         } else {
             test = new ManualExam();
-            check = test.createExam(a, numOfQuestions);
         }
-        if (check)
+        if (test.createExam(subjectName, numOfQuestions, connection))
             System.out.println("Successfully created a test");
         else
             System.out.println("Wasn't able to create a test, try again after altering the pool");
@@ -147,7 +145,7 @@ public class Main {
         System.out.println("Enter how many questions would you like there to be in the " + subject + " pool:");
         int numOfQuestions = sc.nextInt();
 
-        while (Actions.getAmountOfQuestionsInSubjectPool(connection, subject) < numOfQuestions) {
+        while (Pool.getAmountOfQuestionsInSubjectPool(connection, subject) < numOfQuestions) {
             System.out.println("Enter the question's text:");
             String qText = sc.next();
             String diff = defineDifficulty(sc, connection);
@@ -199,7 +197,7 @@ public class Main {
             choice = sc.nextInt();
             switch (choice) { // alter the pool
                 case 1: // seeing the entire pool, question and then answers
-                    System.out.println(Actions.questionsSeperatedFromAnswers(connection, subjectName));
+                    System.out.println(Pool.questionsSeperatedFromAnswers(connection, subjectName));
                     break;
                 case 2: // add a new answer to pool
                     printPlusAddAnswerToArray(subjectName, sc, connection);
@@ -223,7 +221,7 @@ public class Main {
         System.out.println("Enter your new answer(string)");
         String strA = sc.next();
 
-        int check = Actions.addAnswerTextToPool(strA, subject, connection);
+        int check = Pool.addAnswerTextToPool(strA, subject, connection);
         if (check == 1)
             System.out.println("Successfully added a new answer to the pool");
         else if (check == 0)
@@ -251,15 +249,15 @@ public class Main {
 
     // Helper function
     private static void handleOpenQuestion(String subject, String strQuestion, String diff, Scanner sc, Connection connection) throws SQLException {
-        System.out.println(Actions.answerTextPoolToString(connection, subject));
+        System.out.println(Pool.answerTextPoolToString(connection, subject));
         int choice = getAnswerChoice(sc);
         //AnswerText at;
         String answer;
         if (choice == 1) {
-            System.out.println(Actions.answerTextPoolToString(connection, subject));
+            System.out.println(Pool.answerTextPoolToString(connection, subject));
             System.out.println("Please enter the index of the answer for your open question:");
             int solutionIndex = sc.nextInt();
-            answer = Actions.getAnswerTextArrayAtIndex(connection, subject, solutionIndex);
+            answer = Pool.getAnswerTextArrayAtIndex(connection, subject, solutionIndex);
         } else {
             System.out.println("Enter your new answer:");
             answer = sc.next();
@@ -269,7 +267,7 @@ public class Main {
                 return;
             }
 
-            int addAnswerToPoolCheck = Actions.addAnswerTextToPool(answer, subject, connection);
+            int addAnswerToPoolCheck = Pool.addAnswerTextToPool(answer, subject, connection);
             if (addAnswerToPoolCheck == 1) {
                 System.out.println("Successfully added a new answer to the pool");
             } else if (addAnswerToPoolCheck == 0) { // won't get kicked out, just sent with the answer already in DB
@@ -287,7 +285,7 @@ public class Main {
             return;
         }
 
-        if (Actions.addQuestionToPool(connection, newId, subject)) {
+        if (Pool.addQuestionToPool(connection, newId, subject)) {
             System.out.println("Successfully added a new open question to the " + subject + " pool.");
         } else {
             System.out.println("Failed to add the open question, try again.");
@@ -322,7 +320,7 @@ public class Main {
             }
         }
 
-        if (Actions.addQuestionToPool(connection, newId, subject)) {
+        if (Pool.addQuestionToPool(connection, newId, subject)) {
             System.out.println("Successfully added a new American question to the " + subject + " pool.");
         } else {
             System.out.println("Failed to add the American question, try again.");
@@ -330,7 +328,7 @@ public class Main {
     }
 
     public static int addAnswerToAmericanQuestion(String subjectName, int id, Scanner sc, Connection connection) throws SQLException {
-        System.out.println(Actions.answerTextPoolToString(connection, subjectName));
+        System.out.println(Pool.answerTextPoolToString(connection, subjectName));
         int choice = getAnswerChoice(sc);
 
         int checkAddAnswer;
@@ -352,14 +350,14 @@ public class Main {
     }
 
     private static int addAnswerFromPoolToAmericanQuestion(String subject, int id, Scanner sc, Connection connection) throws SQLException {
-        System.out.println(Actions.answerTextPoolToString(connection, subject));
+        System.out.println(Pool.answerTextPoolToString(connection, subject));
         System.out.println("Enter the answer's index:");
         int ansIndex = sc.nextInt();
-
+        String answerText = AnswerText.getAnswerTextByIndex(ansIndex, connection);
         System.out.println("Is the answer true or false (true/false)?");
         boolean isTrue = sc.nextBoolean();
-        String answerText = Answer.insertToTableByIndex(ansIndex, isTrue, connection);
-        return AmericanQuestion.addAnswerToQuestion(answerText, id, connection);
+         //= Answer.insertToTableByIndex(ansIndex, connection);
+        return AmericanQuestion.addAnswerToQuestion(answerText, id, isTrue, connection);
     }
 
     private static int addNewAnswerToAmericanQuestion(String subject, int qId, Scanner sc, Connection connection) throws SQLException {
@@ -371,7 +369,7 @@ public class Main {
             return -1;
         }
 
-        int checkAddAnswer = Actions.addAnswerTextToPool(answerText, subject, connection);
+        int checkAddAnswer = Pool.addAnswerTextToPool(answerText, subject, connection);
         if (checkAddAnswer == 1) {
             System.out.println("Successfully added a new answer to the pool");
         } else if (checkAddAnswer == 0) { // won't get kicked out, just sent with the answer already in DB
@@ -389,14 +387,14 @@ public class Main {
             return -1;
         }
 
-        return AmericanQuestion.addAnswerToQuestion(answerText, qId, connection);
+        return AmericanQuestion.addAnswerToQuestion(answerText, qId, isTrue, connection);
     }
 
     public static void printPlusDeleteQuestionFromArray(String subjectName, Connection connection, Scanner sc) throws SQLException {
-        System.out.println(Actions.questionPoolToString(subjectName, connection));
+        System.out.println(Pool.questionPoolToString(subjectName, connection));
         System.out.println("Enter the index of the question you want to delete");
         int index = sc.nextInt();
-        if (Actions.deleteQuestionFromArray(index, connection))
+        if (Pool.deleteQuestionFromArray(index, connection))
             System.out.println("Successfully deleted question number-" + index);
         else
             System.out.println("Failed to delete question from array, try with a different index");

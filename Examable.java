@@ -1,9 +1,11 @@
 package testing;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 public interface Examable {
-	
-	public boolean createExam(Actions a, int numOfQuestions) throws IOException, LessThanThreeAnswersException;
-	
+
+    boolean createExam(String subjectName, int numOfQuestions, Connection connection) throws SQLException, IOException;
+
 }

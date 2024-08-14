@@ -2,14 +2,14 @@ package testing;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.net.ConnectException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Objects;
 
-public class Actions implements Serializable {
+public class Pool implements Serializable {
     /**
      *
      */
@@ -145,17 +145,22 @@ public class Actions implements Serializable {
     }
 
 
-    public int countAmericanQuestionsWithMoreThanFourAnswers() {
-        int count = 0;
-        for (Question question : this.questionArray) {
-            if (question instanceof AmericanQuestion) {
-                AmericanQuestion americanQuestion = (AmericanQuestion) question;
-                if (americanQuestion.getAnswerCount() >= 4) {
-                    count++;
-                }
-            }
+    public static int countAmericanQuestionsWithMoreThanFourAnswers(Connection connection, String subName) throws SQLException {
+        PreparedStatement pst;
+        ResultSet rs ;
+        try {
+            pst = connection.prepareStatement("SELECT COUNT(*) FROM QuestionsPool QP" +
+                    "JOIN QuestionAnswer QA ON QP.questionId = QA.questionId" +
+                    "WHERE QP.subjectName LIKE ?" +
+                    "GROUP BY QP.questionId" +
+                    "HAVING COUNT(QA.answerText) >= 4");
+            pst.setString(1, subName);
+            rs = pst.executeQuery();
+            return rs.next() ? rs.getInt(1) : 0;
+        }catch(SQLException e) {
+            e.printStackTrace();
         }
-        return count;
+        return -1;
     }
 
 
@@ -231,13 +236,13 @@ public class Actions implements Serializable {
 //            questionArray.get(indexQuestion - 1).deleteAnswerFromQuestion(indexAnswer);
 //            return true;
 //        }
-
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        Actions other = (Actions) obj;
-        return Objects.equals(subName, other.subName);
-    }
+//    @Override
+//    public boolean equals(Object obj) {
+//        if (this == obj) return true;
+//        if (obj == null || getClass() != obj.getClass()) return false;
+//        Pool other = (Pool) obj;
+//        return Objects.equals(subName);
+//    }
 
     public static boolean isQuestionType(Connection connection, int questionId, String tableName) throws SQLException {
         PreparedStatement pst = null;
@@ -303,7 +308,7 @@ public class Actions implements Serializable {
                     // Check if it's an OpenQuestion or AmericanQuestion
                     if (isQuestionType(connection, questionId, "OpenQuestion")) {
                         str += "Open Question: " + questionText + "\n";
-                        str += OpenQuestion.getOpenQuestionSolution(connection, questionId);
+                        str += OpenQuestion.getOpenQuestionSolution(questionId, connection);
                     } else {
                         str += "American Question: " + questionText + "\n";
                         str += AmericanQuestion.getAmericanQuestionAnswers(connection, questionId);
@@ -343,16 +348,16 @@ public class Actions implements Serializable {
     }
 
     // prints the questions with their answers
-    public String toString() {
-        int i = 0;
-        String str = "Here is the questions with their answers:" + "\n";
-        for (Question q : this.questionArray) {
-            if (q instanceof AmericanQuestion)
-                str += (i + 1) + ")" + q.questionWithAnswersToString() + "\n";
-            else
-                str += (i + 1) + ")" + q.toString() + "\n";
-            i++;
-        }
-        return str;
-    }
+//    public String toString() {
+//        int i = 0;
+//        String str = "Here is the questions with their answers:" + "\n";
+//        for (Question q : this.questionArray) {
+//            if (q instanceof AmericanQuestion)
+//                str += (i + 1) + ")" + q.questionWithAnswersToString() + "\n";
+//            else
+//                str += (i + 1) + ")" + q.toString() + "\n";
+//            i++;
+//        }
+//        return str;
+//    }
 }

@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 
@@ -23,6 +24,7 @@ public class AnswerText implements Serializable {
         this.answerText = other.answerText;
     }
 
+
     // no set for the text because there were no request for it
     public String getAnswerText() {
         return answerText;
@@ -40,6 +42,22 @@ public class AnswerText implements Serializable {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public static String getAnswerTextByIndex(int ansIndex, Connection connection) {
+        try (PreparedStatement pst = connection.prepareStatement("SELECT * FROM AnswerText LIMIT ? OFFSET ?")) {
+            pst.setInt(1, 1);
+            pst.setInt(2, ansIndex - 1);
+            ResultSet rs = pst.executeQuery();
+            rs.next();
+            String answerText = rs.getString(1);
+            rs.close();
+            pst.close();
+            return answerText;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 

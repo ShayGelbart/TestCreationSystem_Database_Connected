@@ -51,8 +51,37 @@ public class AmericanQuestion extends Question {
         return -1;
     }
 
-    public Answer getAnswerByIndex(int index) {
-        return answersForQuestions.get(index - 1);
+    public static String getAnswerByIndex(Connection connection, int questionId, int index) throws SQLException {
+        String answerText = null;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+
+        try {
+            // Prepare the SQL query to get the answer by index
+            pst = connection.prepareStatement(
+                    "SELECT A.answerText FROM QuestionAnswer QA " +
+                            "JOIN Answer A ON QA.answerText = A.answerText " +
+                            "WHERE QA.questionId = ? ORDER BY A.answerText " +
+                            "LIMIT 1 OFFSET ?"
+            );
+
+            // Set the questionId and index (offset) parameters
+            pst.setInt(1, questionId);
+            pst.setInt(2, index - 1);  // Offset starts from 0, so subtract 1 from the index
+
+            rs = pst.executeQuery();
+
+            // Get the answer text if available
+            if (rs.next()) {
+                answerText = rs.getString("answerText");
+            }
+
+        } finally {
+            if (rs != null) rs.close();
+            if (pst != null) pst.close();
+        }
+
+        return answerText;
     }
 
     public ArrayList<Answer> getAnswersForQuestions() {
@@ -67,13 +96,66 @@ public class AmericanQuestion extends Question {
         return counter;
     }
 
-    public int getNumOfInorrectAnswers() {
-        int counter = 0;
-        for (Answer answersForQuestion : answersForQuestions)
-            if (!answersForQuestion.getTrueness())
-                counter++;
-        return counter;
+    public static boolean isAnswerTrue(Connection connection, int questionId, String answerText) throws SQLException {
+    boolean isTrue = false;
+    PreparedStatement pst = null;
+    ResultSet rs = null;
+
+    try {
+        // Prepare the SQL query to check if the answer is true or false
+        pst = connection.prepareStatement(
+            "SELECT A.trueness " +
+            "FROM QuestionAnswer QA " +
+            "JOIN Answer A ON QA.answerText = A.answerText " +
+            "WHERE QA.questionId = ? AND QA.answerText = ?"
+        );
+
+        // Set the questionId and answerText parameters
+        pst.setInt(1, questionId);
+        pst.setString(2, answerText);
+
+        rs = pst.executeQuery();
+
+        // Get the trueness value if available
+        if (rs.next()) {
+            isTrue = rs.getBoolean("trueness");
+        }
+
+    } finally {
+        if (rs != null) rs.close();
+        if (pst != null) pst.close();
     }
+
+    return isTrue;
+}
+
+
+    public static int getNumOfIncorrectAnswers(Connection connection, int questionId) throws SQLException {
+        int incorrectAnswersCount = 0;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+
+        try {
+            pst = connection.prepareStatement(
+                    "SELECT COUNT(*) AS incorrectCount FROM QuestionAnswer QA " +
+                            "JOIN Answer A ON QA.answerText = A.answerText " +
+                            "WHERE QA.questionId = ? AND A.trueness = FALSE");
+            pst.setInt(1, questionId);  // Set the questionId parameter
+            rs = pst.executeQuery();
+
+            // Get the count of incorrect answers
+            if (rs.next()) {
+                incorrectAnswersCount = rs.getInt("incorrectCount");
+            }
+
+        } finally {
+            if (rs != null) rs.close();
+            if (pst != null) pst.close();
+        }
+
+        return incorrectAnswersCount;
+    }
+
 
     public static int InsertToTable(Connection connection, String strQuestion, String diff) {
         PreparedStatement pst = null;
@@ -91,10 +173,11 @@ public class AmericanQuestion extends Question {
     }
 
     // add answer to question
-    public static int addAnswerToQuestion(String answerText, int qId, Connection connection) {
-        try (PreparedStatement pst = connection.prepareStatement("INSERT INTO QuestionAnswer VALUES (?, ?)")) {
+    public static int addAnswerToQuestion(String answerText, int qId, boolean trueness, Connection connection) {
+        try (PreparedStatement pst = connection.prepareStatement("INSERT INTO QuestionAnswer VALUES (?, ?, ?)")) {
             pst.setInt(1, qId);
             pst.setString(2, answerText);
+            pst.setBoolean(3, trueness);
             int result = pst.executeUpdate();
             pst.close();
             return result;
@@ -103,7 +186,7 @@ public class AmericanQuestion extends Question {
         }
     }
 
-    //		if (answersForQuestions.size() == 10)
+//		if (answersForQuestions.size() == 10)
 //			return false;
 //        for (Answer answersForQuestion : answersForQuestions)
 //            if (answersForQuestion.getAnswer().equals(answerText))
@@ -170,15 +253,13 @@ public class AmericanQuestion extends Question {
 
     }
 
-    protected String testToString() {
-        String str = "(American question) \n" + super.testToString() + "\n";
-        for (Answer answersForQuestion : answersForQuestions)
-            str += answersForQuestion.getAnswer().toString() + "\n";
-
+    public String testToString(int questionId, Connection connection) throws SQLException {
+        String str = "(American question)-" + super.testToString();
+        str += getAmericanQuestionAnswers(connection, questionId);
         return str;
     }
 
-    // functions that are overridden
+// functions that are overridden
 //	public int getAnswerCount();
 //
 //	public boolean addAnswerToQuestion(AnswerText answerText, boolean answerIsTrue);

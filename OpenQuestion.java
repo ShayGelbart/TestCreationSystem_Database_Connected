@@ -44,7 +44,7 @@ public class OpenQuestion extends Question {
         }
     }
 
-    public static String getOpenQuestionSolution(Connection connection, int questionId) throws SQLException {
+    public static String getOpenQuestionSolution(int questionId, Connection connection) throws SQLException {
         PreparedStatement pst = null;
         ResultSet rs = null;
         try {
@@ -53,6 +53,23 @@ public class OpenQuestion extends Question {
             rs = pst.executeQuery();
             if (rs.next()) {
                 return "Solution: " + rs.getString("schoolSolution") + "\n";
+            }
+        } finally {
+            if (rs != null) rs.close();
+            if (pst != null) pst.close();
+        }
+        return "";
+    }
+
+    public static String getOpenQuestionTextAndDiff(int questionId, Connection connection) throws SQLException {
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        try {
+            pst = connection.prepareStatement("SELECT questionText, difficulty FROM Question WHERE id = ?");
+            pst.setInt(1, questionId);
+            rs = pst.executeQuery();
+            if (rs.next()) {
+                return "Open question," + rs.getString("difficulty") + ": " + rs.getString("questionText") + "\n";
             }
         } finally {
             if (rs != null) rs.close();

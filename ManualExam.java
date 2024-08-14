@@ -6,7 +6,6 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Scanner;
 
 public class ManualExam implements Examable {
@@ -22,19 +21,19 @@ public class ManualExam implements Examable {
                 System.out.println("An error occurred, please try again");
                 return false;
             }
-            System.out.println(Actions.questionsSeperatedFromAnswers(connection, subjectName));
+            System.out.println(Pool.questionsSeperatedFromAnswers(connection, subjectName));
             int numOfQuestionsInPool;
             while (numOfQuestions > 0) {
                 do {
                     System.out.println("Enter the question's index which you want to add to the test");
                     qIndex = sc.nextInt();
-                    numOfQuestionsInPool = Actions.getAmountOfQuestionsInSubjectPool(connection, subjectName);
+                    numOfQuestionsInPool = Pool.getAmountOfQuestionsInSubjectPool(connection, subjectName);
                     if (numOfQuestionsInPool == -1)
                         System.out.println("An error occurred, please try again");
                 } while ((qIndex <= 0 || qIndex > numOfQuestionsInPool));
 
-                qId = Actions.getQuestionArrayAtIndex(qIndex, connection, subjectName);
-                if (Actions.isQuestionType(connection, qId, "AmericanQuestion") && AmericanQuestion.getAnswerCount(connection, qId) <= 3) {
+                qId = Pool.getQuestionArrayAtIndex(qIndex, connection, subjectName);
+                if (Pool.isQuestionType(connection, qId, "AmericanQuestion") && AmericanQuestion.getAnswerCount(connection, qId) <= 3) {
                     throw new LessThanThreeAnswersException();
                 }
 
@@ -58,13 +57,13 @@ public class ManualExam implements Examable {
             File exam = new File(fileNameExam);
             exam.createNewFile();
             PrintWriter pw = new PrintWriter(exam);
-            pw.print(Test.manualFileAddedAnswersToString());
+            pw.print(Test.manualFileAddedAnswersToString(connection, testId));
             pw.close();
 
             File solution = new File(fileNameSolution);
             solution.createNewFile();
             PrintWriter pwr = new PrintWriter(solution);
-            pwr.print(t.solutionQuestionsToString());
+            pwr.print(Test.solutionQuestionsToString(connection, testId));
             pwr.close();
 
         } catch (IOException e) {

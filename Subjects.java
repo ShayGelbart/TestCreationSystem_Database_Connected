@@ -14,13 +14,13 @@ public class Subjects implements Serializable {
      */
     @Serial
     private static final long serialVersionUID = 1L;
-    private ArrayList<Actions> pools;
+    private ArrayList<Pool> pools;
 
     public Subjects() {
         this.pools = new ArrayList<>();
     }
 
-    public ArrayList<Actions> getPools() {
+    public ArrayList<Pool> getPools() {
         return pools;
     }
 
@@ -43,7 +43,7 @@ public class Subjects implements Serializable {
         return subjectName;
     }
 
-    public void setPools(ArrayList<Actions> pools) {
+    public void setPools(ArrayList<Pool> pools) {
         this.pools = pools;
     }
 
@@ -66,7 +66,7 @@ public class Subjects implements Serializable {
         PreparedStatement pst = null;
         boolean check;
         try {
-            pst = connection.prepareStatement("INSERT INTO Actions VALUES (?)");
+            pst = connection.prepareStatement("INSERT INTO Pool VALUES (?)");
             pst.setString(1, subject);
             check = pst.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -115,7 +115,7 @@ public class Subjects implements Serializable {
     @SuppressWarnings("unchecked")
     public void readFromBinaryFile() throws FileNotFoundException, IOException, ClassNotFoundException {
         ObjectInputStream inFile = new ObjectInputStream(new FileInputStream("Subjects.dat"));
-        pools = (ArrayList<Actions>) inFile.readObject();
+        pools = (ArrayList<Pool>) inFile.readObject();
         inFile.close();
     }
 
@@ -153,7 +153,7 @@ public class Subjects implements Serializable {
     // prints the entire data base's tests
     public String toString() {
         String str = "The entire data base:\n";
-        for (Actions pool : this.pools) {
+        for (Pool pool : this.pools) {
             str += pool.toString() + "\n";
         }
         return str;
