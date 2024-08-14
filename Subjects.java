@@ -29,8 +29,8 @@ public class Subjects implements Serializable {
         PreparedStatement pst = null;
         try {
             // Step 1: Get the primary key (subjectName) of the row at the specified index
-            pst = connection.prepareStatement("SELECT subjectName FROM Actions LIMIT 1 OFFSET ?");
-            pst.setInt(1, index);
+            pst = connection.prepareStatement("SELECT subjectName FROM Pool LIMIT 1 OFFSET ?");
+            pst.setInt(1, index - 1);
             ResultSet rs = pst.executeQuery();
             if (rs.next()) {
                 subjectName = rs.getString("subjectName");
@@ -48,7 +48,7 @@ public class Subjects implements Serializable {
     }
 
     public static int getAmountOfPools(Connection connection) throws SQLException {
-        try (PreparedStatement pst = connection.prepareStatement("SELECT COUNT(*) FROM Actions")) {
+        try (PreparedStatement pst = connection.prepareStatement("SELECT COUNT(*) FROM Pool")) {
             ResultSet rs = pst.executeQuery();
             rs.next();
             int result = rs.getInt(1);
@@ -82,7 +82,7 @@ public class Subjects implements Serializable {
     public static boolean deletePoolFromArray(int index, Connection connection) throws SQLException {
         PreparedStatement pst = null;
         try {
-            pst = connection.prepareStatement("SELECT subjectName FROM Actions LIMIT 1 OFFSET ?");
+            pst = connection.prepareStatement("SELECT subjectName FROM Pool LIMIT 1 OFFSET ?");
             pst.setInt(1, index - 1);
             ResultSet rs = pst.executeQuery();
             if (rs.next()) {
@@ -90,7 +90,7 @@ public class Subjects implements Serializable {
                 rs.close();
                 pst.close();
 
-                pst = connection.prepareStatement("DELETE FROM Actions WHERE subjectName = ?");
+                pst = connection.prepareStatement("DELETE FROM Pool WHERE subjectName = ?");
                 pst.setString(1, subjectName);
                 boolean result = pst.executeUpdate() > 0;
                 pst.close();
@@ -131,7 +131,7 @@ public class Subjects implements Serializable {
         int i = 0;
         PreparedStatement pst;
         try {
-            pst = connection.prepareStatement("SELECT subjectName FROM Actions");
+            pst = connection.prepareStatement("SELECT subjectName FROM Pool");
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
                 str += (i + 1) + ")" + rs.getString("subjectName") + "\n";

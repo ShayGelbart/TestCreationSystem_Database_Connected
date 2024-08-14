@@ -52,6 +52,20 @@ public abstract class Question implements Serializable {
         this.diff = diff;
     }
 
+    public static int insertIntoTable(Connection connection, String questionText, String diff) throws SQLException {
+        try (PreparedStatement pst = connection.prepareStatement("INSERT INTO Question (questionText, difficulty) VALUES (?, CAST(? AS difficulty)) RETURNING questionId")) {
+            pst.setString(1, questionText);
+            pst.setString(2, diff);
+            ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("questionId");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
     public static String[] printDifficulty(Connection connection) {
         String str = "Enter the difficulty:\n";
         try (PreparedStatement pst = connection.prepareStatement("SELECT unnest(enum_range(NULL::difficulty))")) {

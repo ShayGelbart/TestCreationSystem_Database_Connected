@@ -17,9 +17,9 @@ public class Main {
             String dbUrl = "jdbc:postgresql:TestCreation";
             connection = DriverManager.getConnection(dbUrl, "postgres", "shay0307");
             Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM Pool");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM Question");
             while (rs.next()) {
-                System.out.println("- " + rs.getString("subjectName"));
+                System.out.println("- " + rs.getString("questionText"));
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -53,7 +53,7 @@ public class Main {
                         System.out.println("Try one of the options below");
             }
         } while (mainChoice != 0);
-       // subjects.writeToBinaryFile();
+        // subjects.writeToBinaryFile();
     }
 
     // test creation
@@ -145,7 +145,8 @@ public class Main {
         System.out.println("Enter how many questions would you like there to be in the " + subject + " pool:");
         int numOfQuestions = sc.nextInt();
 
-        while (Pool.getAmountOfQuestionsInSubjectPool(connection, subject) < numOfQuestions) {
+
+        while (numOfQuestions > 0) {
             System.out.println("Enter the question's text:");
             String qText = sc.next();
             String diff = defineDifficulty(sc, connection);
@@ -160,6 +161,7 @@ public class Main {
             } else {
                 handleAmericanQuestion(subject, qText, diff, sc, connection);
             }
+            numOfQuestions--;
         }
     }
 
@@ -220,7 +222,10 @@ public class Main {
     public static void printPlusAddAnswerToArray(String subject, Scanner sc, Connection connection) throws SQLException {
         System.out.println("Enter your new answer(string)");
         String strA = sc.next();
-
+        if (!AnswerText.InsertToTable(connection, strA)) {
+            System.out.println("An error occurred, try again");
+            return;
+        }
         int check = Pool.addAnswerTextToPool(strA, subject, connection);
         if (check == 1)
             System.out.println("Successfully added a new answer to the pool");
@@ -249,8 +254,10 @@ public class Main {
 
     // Helper function
     private static void handleOpenQuestion(String subject, String strQuestion, String diff, Scanner sc, Connection connection) throws SQLException {
+        int choice = 2;
         System.out.println(Pool.answerTextPoolToString(connection, subject));
-        int choice = getAnswerChoice(sc);
+        if (Pool.getAmountOfAnswersInSubjectPool(connection, subject) > 0)
+            choice = getAnswerChoice(sc);
         //AnswerText at;
         String answer;
         if (choice == 1) {
@@ -356,7 +363,7 @@ public class Main {
         String answerText = AnswerText.getAnswerTextByIndex(ansIndex, connection);
         System.out.println("Is the answer true or false (true/false)?");
         boolean isTrue = sc.nextBoolean();
-         //= Answer.insertToTableByIndex(ansIndex, connection);
+        //= Answer.insertToTableByIndex(ansIndex, connection);
         return AmericanQuestion.addAnswerToQuestion(answerText, id, isTrue, connection);
     }
 

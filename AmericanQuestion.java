@@ -159,10 +159,13 @@ public class AmericanQuestion extends Question {
 
     public static int InsertToTable(Connection connection, String strQuestion, String diff) {
         PreparedStatement pst = null;
+        int questionId;
         try {
-            pst = connection.prepareStatement("INSERT INTO AmericanQuestion (questionText, difficulty) VALUES (?, ?) RETURNING id;");
-            pst.setString(1, strQuestion);
-            pst.setString(2, diff);
+            questionId = Question.insertIntoTable(connection, strQuestion, diff);
+            if(questionId == -1)
+                return -1;
+            pst = connection.prepareStatement("INSERT INTO AmericanQuestion (questionId) VALUES (?) RETURNING questionId;");
+            pst.setInt(1, questionId);
             int result = pst.executeUpdate();
             pst.close();
             return result;

@@ -58,11 +58,10 @@ public class Pool implements Serializable {
             pst.setString(1, subName);
             pst.setInt(2, index - 1);
             ResultSet rs = pst.executeQuery();
-            rs.next();
+            if(rs.next())
+                return rs.getString("answerText");
             rs.close();
             pst.close();
-            return rs.getString("answerText");
-
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -121,10 +120,12 @@ public class Pool implements Serializable {
         try (PreparedStatement pst = connection.prepareStatement("SELECT COUNT(*) FROM AnswersPool WHERE subjectName LIKE ?")) {
             pst.setString(1, subName);
             ResultSet rs = pst.executeQuery();
-            rs.next();
+            int check = 0;
+            if(rs.next())
+                check = rs.getInt(1);
             rs.close();
             pst.close();
-            return rs.getInt(1);
+            return check;
         } catch (SQLException e) {
             return -1;
         }
@@ -248,7 +249,7 @@ public class Pool implements Serializable {
         PreparedStatement pst = null;
         ResultSet rs = null;
         try {
-            pst = connection.prepareStatement("SELECT 1 FROM " + tableName + " WHERE id = ?");
+            pst = connection.prepareStatement("SELECT 1 FROM " + tableName + " WHERE questionId = ?");
             pst.setInt(1, questionId);
             rs = pst.executeQuery();
             return rs.next(); // If there's a result, it means the question exists in that table
@@ -268,7 +269,7 @@ public class Pool implements Serializable {
             pst.setString(1, subName);
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
-                str += (i + 1) + ")" + rs.getString("answerText");
+                str += (i + 1) + ")" + rs.getString("answerText") + "\n";
                 i++;
             }
             rs.close();
@@ -287,7 +288,7 @@ public class Pool implements Serializable {
     public static String questionPoolToString(String subjectName, Connection connection) throws SQLException {
         PreparedStatement pst = null;
         ResultSet rs = null;
-        int i = 1;
+        int i = 0;
         String str = "Here is the question pool:" + "\n";
         try {
             pst = connection.prepareStatement("SELECT questionId FROM QuestionsPool WHERE subjectName = ?");
@@ -298,13 +299,13 @@ public class Pool implements Serializable {
                 int questionId = rs.getInt("questionId");
 
                 // Retrieve the question from the Question table
-                PreparedStatement pstQuestion = connection.prepareStatement("SELECT * FROM Question WHERE id = ?");
+                PreparedStatement pstQuestion = connection.prepareStatement("SELECT * FROM Question WHERE questionId = ?");
                 pstQuestion.setInt(1, questionId);
                 ResultSet rsQuestion = pstQuestion.executeQuery();
 
                 if (rsQuestion.next()) {
                     String questionText = rsQuestion.getString("questionText");
-
+                    str += (i + 1) + ")";
                     // Check if it's an OpenQuestion or AmericanQuestion
                     if (isQuestionType(connection, questionId, "OpenQuestion")) {
                         str += "Open Question: " + questionText + "\n";
@@ -314,7 +315,7 @@ public class Pool implements Serializable {
                         str += AmericanQuestion.getAmericanQuestionAnswers(connection, questionId);
                     }
                 }
-
+                i++;
                 pstQuestion.close();
             }
         } catch (SQLException e) {
@@ -323,6 +324,9 @@ public class Pool implements Serializable {
             if (rs != null) rs.close();
             if (pst != null) pst.close();
         }
+
+        if (i == 0)
+            return "There are no questions in the pool\n";
         return str;
     }
 //    public String questionPoolToString() {
