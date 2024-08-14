@@ -1,5 +1,8 @@
 package testing;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class Test {
@@ -9,11 +12,25 @@ public class Test {
 	private String subName;
 	
 	
-	public Test(ArrayList<Question> testQuestions , Actions a , String subName) {
-		this.testQuestions = testQuestions;
-		this.a = a;
+	public Test(String subName) {
+		this.testQuestions = new ArrayList<>();
+		//this.a = a;
 		this.subName = subName;
 	}
+
+	public static int insertToTable(Connection connection, String subjectName) {
+		PreparedStatement pst;
+		try {
+			pst = connection.prepareStatement("INSERT INTO Test VALUES (?) RETURNING testId");
+			pst.setString(1, subjectName);
+			int res = pst.executeUpdate();
+			pst.close();
+			return res;
+		} catch (SQLException e) {
+            e.printStackTrace();
+        }
+		return 0;
+    }
 
 	public void setA(Actions a) {
 		this.a = a;

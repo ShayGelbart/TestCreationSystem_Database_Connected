@@ -3,6 +3,7 @@ package testing;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -12,13 +13,17 @@ public class ManualExam implements Examable {
     static Scanner sc = new Scanner(System.in);
 
     @Override
-    public boolean createExam(Actions a, int numOfQuestions) {
+    public boolean createExam(String subjectName, int numOfQuestions, Connection connection) {
         try {
-            int qIndex;
-            Actions b = new Actions(a);
-            Test t = new Test(new ArrayList<Question>(), b, b.getSubName());
-            System.out.println(b.toString());
-            while (t.getTestQuestions().size() < numOfQuestions) {
+            int qIndex, testId = Test.insertToTable(connection, subjectName);
+            //Actions b = new Actions(a);
+            //Test t = new Test(subjectName);
+            if(testId == 0) {
+                System.out.println("An error occurred, please try again");
+                return false;
+            }
+            System.out.println(Actions.questionsSeperatedFromAnswers(connection, subjectName));
+            while (Test.getTestQuestions().size() < numOfQuestions) {
                 do {
                     System.out.println("Enter the question's index which you want to add to the test");
                     qIndex = sc.nextInt();

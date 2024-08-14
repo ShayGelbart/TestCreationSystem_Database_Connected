@@ -9,7 +9,7 @@ import java.sql.*;
 public class Main {
 
     public static void main(String[] args)
-            throws IOException, LessThanThreeAnswersException, AmountOfQuestionsException, ClassNotFoundException, SQLException {
+            throws IOException, LessThanThreeAnswersException, ClassNotFoundException, SQLException {
         Scanner sc = new Scanner(System.in);
         Connection connection = null;
         try {
@@ -24,7 +24,7 @@ public class Main {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-        Subjects subjects = new Subjects();
+        //Subjects subjects = new Subjects();
 //        File f = new File("Subjects.dat");
 //        if (!f.exists())
 //            f.createNewFile();
@@ -41,10 +41,10 @@ public class Main {
             mainChoice = sc.nextInt();
             switch (mainChoice) {
                 case 1:
-                    testCreation(sc, subjects, connection);
+                    testCreation(sc, connection);
                     break;
                 case 2:
-                    editOrNewMenu(sc, subjects, connection);
+                    editOrNewMenu(sc, connection);
                     break;
                 case 0:
                     System.out.println("Goodbye,have a good day:)");
@@ -53,7 +53,7 @@ public class Main {
                         System.out.println("Try one of the options below");
             }
         } while (mainChoice != 0);
-        subjects.writeToBinaryFile();
+       // subjects.writeToBinaryFile();
     }
 
     // test creation
@@ -103,7 +103,7 @@ public class Main {
             System.out.println("Wasn't able to create a test, try again after altering the pool");
     }
 
-    public static void editOrNewMenu(Scanner sc, Subjects subjects, Connection connection) throws SQLException {
+    public static void editOrNewMenu(Scanner sc, Connection connection) throws SQLException {
         int editOrNewChoice;
         do {
             System.out.println("Welcome to the mini menu");
