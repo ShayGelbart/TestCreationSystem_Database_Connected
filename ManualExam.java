@@ -23,7 +23,7 @@ public class ManualExam implements Examable {
                 return false;
             }
             System.out.println(Actions.questionsSeperatedFromAnswers(connection, subjectName));
-            while (Test.getTestQuestions().size() < numOfQuestions) {
+            while (Test.getTestQuestions() < numOfQuestions) {
                 do {
                     System.out.println("Enter the question's index which you want to add to the test");
                     qIndex = sc.nextInt();
