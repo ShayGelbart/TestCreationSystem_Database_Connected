@@ -10,10 +10,10 @@ import java.util.ArrayList;
 public class AutomaticExam implements Examable {
 
 	@Override
-	public boolean createExam(Actions a, int numOfQuestions) throws IOException {
+	public boolean createExam(String subjectName, int numOfQuestions) throws IOException {
 		int qRandIndex, correctAnswerCounter = 0, answerCount, aRandIndex, qArrayIndex = 1;
-		Actions b = new Actions(a);
-		Actions c = new Actions(a.getSubName());
+		//Actions b = new Actions(a);
+		//Actions c = new Actions(a.getSubName());
 		Test t = new Test(new ArrayList<Question>() , c, c.getSubName()); // empty test
 		if(a.countAmericanQuestionsWithMoreThanFourAnswers() < numOfQuestions)
 			return false;

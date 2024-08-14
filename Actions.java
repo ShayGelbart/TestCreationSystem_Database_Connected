@@ -168,10 +168,10 @@ public class Actions implements Serializable {
 //        } else
 //            return false;
 
-    public void deleteAllAnswersFromAllQuestions() {
-        for (Question question : questionArray)
-            question.deleteAllAnswers();
-    }
+//    public void deleteAllAnswersFromAllQuestions() {
+//        for (Question question : questionArray)
+//            question.deleteAllAnswers();
+//    }
 
     // add question to pool
     public static boolean addQuestionToPool(Connection connection, int questionId, String subject) throws SQLException {
@@ -194,20 +194,20 @@ public class Actions implements Serializable {
     }
 
         // add answer to question based on its index from the pool
-        public boolean addAnswerToAmericanQuestionByIndex ( int indexQuestion, int indexAnswer, boolean answerIsTrue){
-            if (questionArray.get(indexQuestion - 1).getAnswerCount() >= 10)
-                return false;
-            questionArray.get(indexQuestion - 1).addAnswerToQuestion(answerTextArray.get(indexAnswer - 1), answerIsTrue);
-            return true;
-        }
+//        public boolean addAnswerToAmericanQuestionByIndex ( int indexQuestion, int indexAnswer, boolean answerIsTrue){
+//            if (questionArray.get(indexQuestion - 1).getAnswerCount() >= 10)
+//                return false;
+//            questionArray.get(indexQuestion - 1).addAnswerToQuestion(answerTextArray.get(indexAnswer - 1), answerIsTrue);
+//            return true;
+//        }
 
         // delete answer from question based on its index from the pool
-        public boolean deleteAnswerFromQuestionByIndex ( int indexQuestion, int indexAnswer) {
-            if (questionArray.get(indexQuestion - 1).getAnswerCount() == 0)
-                return false;
-            questionArray.get(indexQuestion - 1).deleteAnswerFromQuestion(indexAnswer);
-            return true;
-        }
+//        public boolean deleteAnswerFromQuestionByIndex ( int indexQuestion, int indexAnswer) {
+//            if (questionArray.get(indexQuestion - 1).getAnswerCount() == 0)
+//                return false;
+//            questionArray.get(indexQuestion - 1).deleteAnswerFromQuestion(indexAnswer);
+//            return true;
+//        }
 
         public boolean equals (Object obj){
             if (this == obj) return true;
@@ -216,7 +216,7 @@ public class Actions implements Serializable {
             return Objects.equals(subName, other.subName);
         }
 
-        private static boolean isQuestionType(Connection connection,int questionId, String tableName) {
+        private static boolean isQuestionType(Connection connection,int questionId, String tableName) throws SQLException {
             PreparedStatement pst = null;
             ResultSet rs = null;
             try {

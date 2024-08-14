@@ -57,18 +57,22 @@ public class Main {
     }
 
     // test creation
-    public static void testCreation(Scanner sc, Subjects subjects, Connection connection) throws
-            IOException, LessThanThreeAnswersException {
-        if (subjects.getPools().isEmpty()) {
+    public static void testCreation(Scanner sc, Connection connection) throws
+            IOException, LessThanThreeAnswersException, SQLException {
+        int amountOfPools = Subjects.getAmountOfPools(connection);
+        if (amountOfPools == 0) {
             System.out.println("There is no pool to make a test out of, create a pool first");
+            return;
+        } else if (amountOfPools == -1) {
+            System.out.println("An error occurred, please try again");
             return;
         }
 
         Examable test;
-        System.out.println(subjects.toStringSubjectNames());
+        System.out.println(Subjects.toStringSubjectNames(connection));
         System.out.println("Enter the index of the subject which you would like your test to be in:");
         int index = sc.nextInt();
-        Actions a = subjects.getPoolsAtIndex(index);
+        String subjectName = Subjects.getPoolsAtIndex(index, connection);
         int numOfQuestions = 0;
         do {
             try {
@@ -82,7 +86,7 @@ public class Main {
                 System.out.println("Invalid input. Please enter a valid number.");
                 sc.next(); // Clear the invalid input from the scanner
             }
-        } while (numOfQuestions > 10 || numOfQuestions <= 0 || numOfQuestions > a.getQuestionArray().size());
+        } while (numOfQuestions > 10 || numOfQuestions <= 0 || numOfQuestions > Actions.getAmountOfQuestionsInSubjectPool(connection, subjectName));
         System.out.println("Do you want to create an automatic test or making it manually?");
         System.out.println("Enter true for automatic, false for manual");
         boolean check, isAuto = sc.nextBoolean();
