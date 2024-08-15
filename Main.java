@@ -121,7 +121,7 @@ public class Main {
         System.out.println("Enter your new subject:");
         String subject = sc.next();
 
-        if (!Subjects.addPoolToArray(subject, connection)) {
+        if (!Subjects.insertToTable(subject, connection)) {
             System.out.println("Unable to create a new pool, try again");
             return;
         }
@@ -207,11 +207,13 @@ public class Main {
     public static void printPlusAddAnswerToArray(String subject, Scanner sc, Connection connection) throws SQLException {
         System.out.println("Enter your new answer(string)");
         String strA = checkString(sc);
-        if (!AnswerText.isAnswerTextInTable(connection, strA)) // if not in table insert to table
+        if (!AnswerText.isAnswerTextInTable(connection, strA)) { // if not in table insert to table
             if (!AnswerText.InsertToTable(connection, strA)) {
                 System.out.println("An error occurred, try again");
                 return;
             }
+        } else
+            System.out.println("U");
         int check = Pool.addAnswerTextToPool(strA, subject, connection);
         if (check == 1)
             System.out.println("Successfully added a new answer to the pool");
