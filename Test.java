@@ -154,29 +154,6 @@ public class Test {
     }
 
 
-    // setSolutionQuestions(testQuestions);
-//        String str = "";
-//        int trueAnswerCounter, temp = 0;
-//        String zeroCorrect = "Not a single answer is correct";
-//        String moreThanOne = "More than one answer is correct";
-//
-//
-//
-//        trueAnswerCounter = 0;
-//        if (solutionQuestions.get(i) instanceof AmericanQuestion)
-//            for (int j = 1; j <= solutionQuestions.get(i).getAnswerCount(); j++)
-//                if (solutionQuestions.get(i).getAnswerByIndex(j).getTrueness()) {
-//                    trueAnswerCounter++;
-//                    temp = j;
-//                }
-//        if (trueAnswerCounter == 0)
-//            str = zeroCorrect;
-//        else if (trueAnswerCounter == 1)
-//            str = solutionQuestions.get(i).getAnswerByIndex(temp).getAnswer().getAnswerText();
-//        else if (trueAnswerCounter > 1)
-//            str = moreThanOne;
-//        return (str + "\n");
-//    }
 
     // print only the question in the test without their answers
     public String testQuestionsToString() {
@@ -250,15 +227,6 @@ public class Test {
         }
         rs.close();
 
-//        for (Question q : this.testQuestions) {
-//            if (q instanceof AmericanQuestion) {
-//                str += (i + 1) + ")" + q.testToString();
-//                str += "Answer-Not a single answer is correct" + "\n";
-//                str += "Answer-More than one answer is correct" + "\n" + "\n";
-//            } else // open question
-//                str += (i + 1) + ")" + q.testToString() + "\n";
-//            i++;
-//        }
         return str;
     }
 
@@ -293,18 +261,5 @@ public class Test {
         return str;
     }
 
-    // print the test questions with their answers
-//    public String toString() {
-//        int i = 0;
-//        String str = "";
-//
-//        for (Question q : this.solutionQuestions) {
-//            if (q instanceof AmericanQuestion) {
-//                str += (i + 1) + ")" + q.questionWithAnswersToString() + "\n";
-//            } else // open question
-//                str += (i + 1) + ")" + q.toString() + "\n";
-//            i++;
-//        }
-//        return str;
-//    }
+
 }
