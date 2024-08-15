@@ -293,7 +293,7 @@ public class Main {
         }
 
         if (Pool.addQuestionToPool(connection, newId, subject)) {
-            System.out.println("Successfully added a new open question to the " + subject + " pool.");
+            System.out.println("Successfully added a new open question to the " + subject + " pool.\n");
         } else {
             System.out.println("Failed to add the open question, try again.");
         }

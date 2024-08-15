@@ -242,7 +242,7 @@ public class AmericanQuestion extends Question {
             if (rs != null) rs.close();
             if (pst != null) pst.close();
         }
-        return str;
+        return str + "\n";
     }
 
     public String toString() {
