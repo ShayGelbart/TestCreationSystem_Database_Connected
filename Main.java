@@ -348,7 +348,7 @@ public class Main {
         System.out.println("Enter the answer's index:");
         int ansIndex = sc.nextInt();
         String answerText = AnswerText.getAnswerTextByIndex(ansIndex, subject, connection);
-
+        // note
         System.out.println("Is the answer true or false (true/false)?");
         boolean isTrue = sc.nextBoolean();
 
