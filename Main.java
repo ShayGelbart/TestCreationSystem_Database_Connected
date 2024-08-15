@@ -119,7 +119,7 @@ public class Main {
     public static void createAndDefineNewPool(Scanner sc, Connection connection) throws SQLException {
         System.out.println("You've decided to create a new pool");
         System.out.println("Enter your new subject:");
-        String subject = sc.next();
+        String subject = checkString(sc);
 
         if (!Subjects.insertToTable(subject, connection)) {
             System.out.println("Unable to create a new pool, try again");
