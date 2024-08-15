@@ -120,7 +120,7 @@ public class Main {
     public static void createAndDefineNewPool(Scanner sc, Connection connection) throws SQLException {
         System.out.println("You've decided to create a new pool");
         System.out.println("Enter your new subject:");
-        String subject = sc.next();
+        String subject = checkString(sc);
 
         if (!Subjects.addPoolToArray(subject, connection)) {
             System.out.println("Unable to create a new pool, try again");
@@ -129,18 +129,18 @@ public class Main {
         System.out.println("Successfully created a new pool for " + subject);
 
         System.out.println("Enter how many questions would you like there to be in the " + subject + " pool:");
-        int numOfQuestions = sc.nextInt();
+        int numOfQuestions = readInRange(0,10000000,sc );
 
 
         while (numOfQuestions > 0) {
             System.out.println("Enter the question's text:");
-            String qText = sc.next();
+            String qText = checkString(sc);
             String diff = defineDifficulty(sc, connection);
             if (diff == null) {
                 System.out.println("An error occurred, try again");
                 return;
             }
-            System.out.println("Type true if you would like to add an open question, false for an American question:");
+            System.out.println("true - Add an open question\nfalse - Add an American question:");
             boolean isOpen = sc.nextBoolean();
             if (isOpen) {
                 handleOpenQuestion(subject, qText, diff, sc, connection);
