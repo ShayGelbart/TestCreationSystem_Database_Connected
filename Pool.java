@@ -170,14 +170,14 @@ public class Pool implements Serializable {
         PreparedStatement pst = null;
         try {
             pst = connection.prepareStatement("SELECT questionId FROM QuestionsPool LIMIT 1 OFFSET ?");
-            pst.setInt(1, index - 1);
+            pst.setInt(1, index);
             ResultSet rs = pst.executeQuery();
             if (rs.next()) {
                 int questionId = rs.getInt("questionId");
                 rs.close();
                 pst.close();
 
-                pst = connection.prepareStatement("DELETE FROM Question WHERE questionId = ?");
+                pst = connection.prepareStatement("DELETE FROM QuestionsPool WHERE questionId = ?");
                 pst.setInt(1, questionId);
                 return pst.executeUpdate() > 0;
             }

@@ -13,9 +13,9 @@ public class Main {
         Scanner sc = new Scanner(System.in);
         Connection connection = null;
         try {
-            Class.forName("org.postgresql.Driver"); // line 18
+            Class.forName("org.postgresql.Driver"); // line 16
             String dbUrl = "jdbc:postgresql:TestCreation";
-            connection = DriverManager.getConnection(dbUrl, "postgres", "password");
+            connection = DriverManager.getConnection(dbUrl, "postgres", "shay0307");
             Statement stmt = connection.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM Question");
             while (rs.next()) {
@@ -208,10 +208,11 @@ public class Main {
     public static void printPlusAddAnswerToArray(String subject, Scanner sc, Connection connection) throws SQLException {
         System.out.println("Enter your new answer(string)");
         String strA = sc.next();
-        if (!AnswerText.InsertToTable(connection, strA)) {
-            System.out.println("An error occurred, try again");
-            return;
-        }
+        if (!AnswerText.isAnswerTextInTable(connection, strA)) // if not in table insert to table
+            if (!AnswerText.InsertToTable(connection, strA)) {
+                System.out.println("An error occurred, try again");
+                return;
+            }
         int check = Pool.addAnswerTextToPool(strA, subject, connection);
         if (check == 1)
             System.out.println("Successfully added a new answer to the pool");
@@ -346,10 +347,11 @@ public class Main {
         System.out.println(Pool.answerTextPoolToString(connection, subject));
         System.out.println("Enter the answer's index:");
         int ansIndex = sc.nextInt();
-        String answerText = AnswerText.getAnswerTextByIndex(ansIndex, connection);
+        String answerText = AnswerText.getAnswerTextByIndex(ansIndex, subject, connection);
+
         System.out.println("Is the answer true or false (true/false)?");
         boolean isTrue = sc.nextBoolean();
-        //= Answer.insertToTableByIndex(ansIndex, connection);
+
         return AmericanQuestion.addAnswerToQuestion(answerText, id, isTrue, connection);
     }
 
@@ -374,11 +376,6 @@ public class Main {
 
         System.out.println("Is the answer true or false (true/false)?");
         boolean isTrue = sc.nextBoolean();
-
-        if (!Answer.insertToTable(answerText, isTrue, connection)) {
-            System.out.println("An error occurred, please try again");
-            return -1;
-        }
 
         return AmericanQuestion.addAnswerToQuestion(answerText, qId, isTrue, connection);
     }
