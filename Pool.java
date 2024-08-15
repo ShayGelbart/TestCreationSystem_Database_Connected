@@ -114,19 +114,14 @@ public class Pool implements Serializable {
         ResultSet rs = null;
         try {
             // Prepare the SQL statement to check if the answerText is in the pool of the given subject
-            pst = connection.prepareStatement("SELECT COUNT(*) FROM AnswersPool WHERE answerText = ? AND subjectName = ?");
+            pst = connection.prepareStatement("SELECT 1 FROM AnswersPool WHERE answerText = ? AND subjectName = ?");
             pst.setString(1, answerText);
             pst.setString(2, subjectName);
 
             // Execute the query
             rs = pst.executeQuery();
 
-            // Check if the result count is greater than 0
-            if (rs.next() && rs.getInt(1) > 0) {
-                return true; // answerText is in the pool for the subject
-            } else {
-                return false; // answerText is not in the pool for the subject
-            }
+            return  rs.next();
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
