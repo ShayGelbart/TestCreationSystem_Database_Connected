@@ -37,7 +37,7 @@ public class Subjects implements Serializable {
                 rs.close();
                 pst.close();
             }
-        }catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return subjectName;
@@ -61,8 +61,32 @@ public class Subjects implements Serializable {
         }
     }
 
+    public static boolean isSubjectNameInTable(Connection connection, String subjectName) throws SQLException {
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        try {
+            // Prepare the SQL statement to check for the existence of the subjectName
+            pst = connection.prepareStatement("SELECT 1 FROM Actions WHERE subjectName = ?");
+            pst.setString(1, subjectName);
+
+            // Execute the query
+            rs = pst.executeQuery();
+
+            // If the result set has at least one row, the subjectName exists
+            return rs.next();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            // Clean up resources
+            if (rs != null) rs.close();
+            if (pst != null) pst.close();
+        }
+    }
+
+
     // adds a test to the data base
-    public static boolean addPoolToArray(String subject, Connection connection) throws SQLException {
+    public static boolean insertToTable(String subject, Connection connection) throws SQLException {
         PreparedStatement pst = null;
         boolean check;
         try {
