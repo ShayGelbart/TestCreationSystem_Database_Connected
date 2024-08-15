@@ -169,15 +169,11 @@ public class AmericanQuestion extends Question {
 
             if (questionId == -1)
                 return -1;
-            pst = connection.prepareStatement("INSERT INTO AmericanQuestion (questionId) VALUES (?) RETURNING questionId;");
+            pst = connection.prepareStatement("INSERT INTO AmericanQuestion (questionId) VALUES (?);");
             pst.setInt(1, questionId);
-            ResultSet rs = pst.executeQuery();
-            int res = 0;
-            if (rs.next())
-                res = rs.getInt("questionId");
-            rs.close();
+            pst.executeQuery();
             pst.close();
-            return res;
+            return questionId;
         } catch (SQLException e) {
             e.printStackTrace();
             return 0;

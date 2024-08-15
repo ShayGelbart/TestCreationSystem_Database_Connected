@@ -133,20 +133,26 @@ public class Main {
 
         while (numOfQuestions > 0) {
             System.out.println("Enter the question's text:");
-            String qText = sc.next();
-            String diff = defineDifficulty(sc, connection);
-            if (diff == null) {
-                System.out.println("An error occurred, try again");
-                return;
-            }
-            System.out.println("Type true if you would like to add an open question, false for an American question:");
-            boolean isOpen = sc.nextBoolean();
-            if (isOpen) {
-                handleOpenQuestion(subject, qText, diff, sc, connection);
+            String qText = checkString(sc);
+            if(Pool.isQuestionInSubjectPool(connection, qText, subject)) {
+                System.out.println("Question " + qText + " already exists");
             } else {
-                handleAmericanQuestion(subject, qText, diff, sc, connection);
+                String diff = defineDifficulty(sc, connection);
+                if (diff == null) {
+                    System.out.println("An error occurred, try again");
+                    return;
+                }
+                System.out.println("Type true if you would like to add an open question, false for an American question:");
+                boolean isOpen = sc.nextBoolean();
+                sc.nextLine();
+
+                if (isOpen) {
+                    handleOpenQuestion(subject, qText, diff, sc, connection);
+                } else {
+                    handleAmericanQuestion(subject, qText, diff, sc, connection);
+                }
+                numOfQuestions--;
             }
-            numOfQuestions--;
         }
     }
 
@@ -280,10 +286,15 @@ public class Main {
         }
 
         int newId = OpenQuestion.InsertToTable(connection, strQuestion, diff, answer);
-        if (newId == 0) { // if it already exists in the AnswerText table it's fine( > 0),
-            // if it was an exception(==0), the user should try again.
+        if (newId == 0) { // if it was an exception(==0), the user should try again.
             System.out.println("An error occurred, please try again");
             return;
+        }
+
+        if (Pool.addQuestionToPool(connection, newId, subject)) {
+            System.out.println("Successfully added a new open question to the " + subject + " pool.");
+        } else {
+            System.out.println("Failed to add the open question, try again.");
         }
     }
 
@@ -320,8 +331,10 @@ public class Main {
     }
 
     public static int addAnswerToAmericanQuestion(String subjectName, int id, Scanner sc, Connection connection) throws SQLException {
+        int choice = 2;
         System.out.println(Pool.answerTextPoolToString(connection, subjectName));
-        int choice = getAnswerChoice(sc);
+        if (Pool.getAmountOfAnswersInSubjectPool(connection, subjectName) > 0)
+            choice = getAnswerChoice(sc);
 
         int checkAddAnswer;
         if (choice == 1)
@@ -377,8 +390,9 @@ public class Main {
 
         System.out.println("Is the answer true or false (true/false)?");
         boolean isTrue = sc.nextBoolean();
+        sc.nextLine();
 
-        if(AmericanQuestion.isAnswerTextInAmericanQuestion(qId, answerText, connection)) {
+        if (!AmericanQuestion.isAnswerTextInAmericanQuestion(qId, answerText, connection)) {
             return AmericanQuestion.addAnswerToQuestion(answerText, qId, isTrue, connection);
         } else {
             return 0;

@@ -40,12 +40,11 @@ public class OpenQuestion extends Question {
             if (questionId == -1)
                 return -1;
 
-            pst = connection.prepareStatement("INSERT INTO OpenQuestion (questionId, schoolSolution) VALUES (?, ?) RETURNING questionId;");
+            pst = connection.prepareStatement("INSERT INTO OpenQuestion (questionId, schoolSolution) VALUES (?, ?);");
             pst.setInt(1, questionId);
             pst.setString(2, answer);
-            ResultSet result = pst.executeQuery();
-            if (result.next())
-                return result.getInt("questionId");
+            pst.executeQuery();
+            return questionId;
         } catch (SQLException e) {
             e.printStackTrace();
             return 0;
@@ -53,7 +52,6 @@ public class OpenQuestion extends Question {
             if (pst != null)
                 pst.close();
         }
-        return -1;
     }
 
     public static String getOpenQuestionSolution(int questionId, Connection connection) throws SQLException {
