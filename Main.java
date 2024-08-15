@@ -16,11 +16,11 @@ public class Main {
             Class.forName("org.postgresql.Driver"); // line 16
             String dbUrl = "jdbc:postgresql:TestCreation";
             connection = DriverManager.getConnection(dbUrl, "postgres", "shay0307");
-            Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM Question");
-            while (rs.next()) {
-                System.out.println("- " + rs.getString("questionText"));
-            }
+//            Statement stmt = connection.createStatement();
+//            ResultSet rs = stmt.executeQuery("SELECT * FROM Question");
+//            while (rs.next()) {
+//                System.out.println("- " + rs.getString("questionText"));
+//            }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -167,14 +167,14 @@ public class Main {
     public static void alterPoolMenu(Scanner sc, Connection connection) throws SQLException {
         int choice, poolIndex = -1;
         //idGenerator(subjects);
+        System.out.println(Subjects.toStringSubjectNames(connection));
+        System.out.println("Enter the index of the pool you would like to alter");
+        poolIndex = readInRange(0, Subjects.getAmountOfPools(connection), sc);
+
         do {
-            System.out.println("Welcome to the mini menu where you can alter the pool");
-
-            System.out.println(Subjects.toStringSubjectNames(connection));
-            System.out.println("Enter the index of the pool you would like to alter");
-            poolIndex = readInRange(0, Subjects.getAmountOfPools(connection), sc);
-
             String subjectName = Subjects.getPoolsAtIndex(poolIndex, connection);
+
+            System.out.println("Welcome to the mini menu where you can alter the pool");
             System.out.println("1.See the entire pool(questions and then answers) ");
             System.out.println("2.Add an answer to the pool");
             System.out.println("3.Add a question to the pool");
@@ -223,14 +223,18 @@ public class Main {
     }
 
     public static void printPlusAddQuestionToArray(String subjectName, Scanner sc, Connection connection) throws SQLException {
-        System.out.println("Enter your new question (string):");
-        String strQuestion = checkString(sc);
-
-        String diff = defineDifficulty(sc, connection);
-
         System.out.println("Type true if you would like to add an open question.");
         System.out.println("Type false if you would like to add an American question.");
         boolean isOpen = sc.nextBoolean();
+
+        System.out.println("Enter your new question (string):");
+        String strQuestion = checkString(sc);
+        if (Pool.isQuestionInSubjectPool(connection, strQuestion, subjectName)) {
+            System.out.println("Question is already in the pool, try again");
+            return;
+        }
+
+        String diff = defineDifficulty(sc, connection);
 
         if (isOpen) {
             handleOpenQuestion(subjectName, strQuestion, diff, sc, connection);
@@ -240,13 +244,14 @@ public class Main {
     }
 
     // Helper function
-    private static void handleOpenQuestion(String subject, String strQuestion, String diff, Scanner sc, Connection connection) throws SQLException {
+    private static int handleOpenQuestion(String subject, String strQuestion, String diff, Scanner sc, Connection connection) throws SQLException {
         int choice = 2;
+        String answer;
+
         System.out.println(Pool.answerTextPoolToString(connection, subject));
         if (Pool.getAmountOfAnswersInSubjectPool(connection, subject) > 0)
             choice = getAnswerChoice(sc);
-        //AnswerText at;
-        String answer;
+
         if (choice == 1) {
             System.out.println(Pool.answerTextPoolToString(connection, subject));
             System.out.println("Please enter the index of the answer for your open question:");
@@ -255,20 +260,22 @@ public class Main {
         } else {
             System.out.println("Enter your new answer:");
             answer = sc.next();
-            if (!AnswerText.InsertToTable(connection, answer)) { // if it already exists in the AnswerText table it's fine(rowsAffected >= 0),
-                // if it was an exception, the user should try again.
-                System.out.println("An error occurred, please try again");
-                return;
-            }
+            if (!AnswerText.isAnswerTextInTable(connection, answer))
+                if (!AnswerText.InsertToTable(connection, answer)) { // if it already exists in the AnswerText table it's fine(rowsAffected >= 0),
+                    // if it was an exception, the user should try again.
+                    System.out.println("An error occurred, please try again");
+                    return 0;
+                }
 
-            int addAnswerToPoolCheck = Pool.addAnswerTextToPool(answer, subject, connection);
-            if (addAnswerToPoolCheck == 1) {
-                System.out.println("Successfully added a new answer to the pool");
-            } else if (addAnswerToPoolCheck == 0) { // won't get kicked out, just sent with the answer already in DB
-                System.out.println("Answer is already in the pool, you will now continue with that answer");
-            } else { // exception happened, kicked out of the function
-                System.out.println("An error occurred, please try again");
-                return;
+            int addAnswerToPoolCheck;
+            if (!Pool.isAnswerInSubjectPool(connection, answer, subject)) {
+                addAnswerToPoolCheck = Pool.addAnswerTextToPool(answer, subject, connection);
+                if (addAnswerToPoolCheck == 1) {
+                    System.out.println("Successfully added a new answer to the pool");
+                } else { // exception happened, kicked out of the function
+                    System.out.println("An error occurred, please try again");
+                    return 0;
+                }
             }
         }
 
@@ -276,22 +283,17 @@ public class Main {
         if (newId == 0) { // if it already exists in the AnswerText table it's fine( > 0),
             // if it was an exception(==0), the user should try again.
             System.out.println("An error occurred, please try again");
-            return;
+            return 0;
         }
 
-        if (Pool.addQuestionToPool(connection, newId, subject)) {
-            System.out.println("Successfully added a new open question to the " + subject + " pool.\n");
-        } else {
-            System.out.println("Failed to add the open question, try again.");
-        }
+        return newId;
     }
 
     // Helper function
     private static void handleAmericanQuestion(String subject, String strQuestion, String diff, Scanner sc, Connection connection) throws SQLException {
         //Question aq = new AmericanQuestion(strQuestion, diff);
         int newId = AmericanQuestion.InsertToTable(connection, strQuestion, diff), returnValue, ansAmount;
-        if (newId == 0) { // if it already exists in the AnswerText table it's fine( > 0),
-            // if it was an exception(==0), the user should try again.
+        if (newId == 0) { // if it was an exception(==0), the user should try again.
             System.out.println("An error occurred, please try again");
             return;
         }
@@ -349,32 +351,40 @@ public class Main {
         System.out.println("Is the answer true or false (true/false)?");
         boolean isTrue = sc.nextBoolean();
 
-        return AmericanQuestion.addAnswerToQuestion(answerText, id, isTrue, connection);
+        if (!AmericanQuestion.isAnswerTextInAmericanQuestion(id, answerText, connection))
+            return AmericanQuestion.addAnswerToQuestion(answerText, id, isTrue, connection);
+        else {
+            return 0;
+        }
     }
 
     private static int addNewAnswerToAmericanQuestion(String subject, int qId, Scanner sc, Connection connection) throws SQLException {
         System.out.println("Enter your new answer:");
         String answerText = checkString(sc);
 
-        if (!AnswerText.InsertToTable(connection, answerText)) {
+        if (!AnswerText.isAnswerTextInTable(connection, answerText) && !AnswerText.InsertToTable(connection, answerText)) {
             System.out.println("An error occurred, please try again");
             return -1;
         }
-
-        int checkAddAnswer = Pool.addAnswerTextToPool(answerText, subject, connection);
-        if (checkAddAnswer == 1) {
-            System.out.println("Successfully added a new answer to the pool");
-        } else if (checkAddAnswer == 0) { // won't get kicked out, just sent with the answer already in DB
-            System.out.println("Answer is already in the pool, you will continue with that answer");
-        } else { // exception happened, kicked out of the function
-            System.out.println("An error occurred, please try again");
-            return -1;
+        int checkAddAnswer;
+        if (!Pool.isAnswerInSubjectPool(connection, answerText, subject)) {
+            checkAddAnswer = Pool.addAnswerTextToPool(answerText, subject, connection);
+            if (checkAddAnswer == 1) {
+                System.out.println("Successfully added a new answer to the pool");
+            } else { // exception happened, kicked out of the function
+                System.out.println("An error occurred, please try again");
+                return -1;
+            }
         }
 
         System.out.println("Is the answer true or false (true/false)?");
         boolean isTrue = sc.nextBoolean();
 
-        return AmericanQuestion.addAnswerToQuestion(answerText, qId, isTrue, connection);
+        if(AmericanQuestion.isAnswerTextInAmericanQuestion(qId, answerText, connection)) {
+            return AmericanQuestion.addAnswerToQuestion(answerText, qId, isTrue, connection);
+        } else {
+            return 0;
+        }
     }
 
     public static void printPlusDeleteQuestionFromArray(String subjectName, Connection connection, Scanner sc) throws SQLException {

@@ -97,37 +97,37 @@ public class AmericanQuestion extends Question {
     }
 
     public static boolean isAnswerTrue(Connection connection, int questionId, String answerText) throws SQLException {
-    boolean isTrue = false;
-    PreparedStatement pst = null;
-    ResultSet rs = null;
+        boolean isTrue = false;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
 
-    try {
-        // Prepare the SQL query to check if the answer is true or false
-        pst = connection.prepareStatement(
-            "SELECT A.trueness " +
-            "FROM QuestionAnswer QA " +
-            "JOIN Answer A ON QA.answerText = A.answerText " +
-            "WHERE QA.questionId = ? AND QA.answerText = ?"
-        );
+        try {
+            // Prepare the SQL query to check if the answer is true or false
+            pst = connection.prepareStatement(
+                    "SELECT A.trueness " +
+                            "FROM QuestionAnswer QA " +
+                            "JOIN Answer A ON QA.answerText = A.answerText " +
+                            "WHERE QA.questionId = ? AND QA.answerText = ?"
+            );
 
-        // Set the questionId and answerText parameters
-        pst.setInt(1, questionId);
-        pst.setString(2, answerText);
+            // Set the questionId and answerText parameters
+            pst.setInt(1, questionId);
+            pst.setString(2, answerText);
 
-        rs = pst.executeQuery();
+            rs = pst.executeQuery();
 
-        // Get the trueness value if available
-        if (rs.next()) {
-            isTrue = rs.getBoolean("trueness");
+            // Get the trueness value if available
+            if (rs.next()) {
+                isTrue = rs.getBoolean("trueness");
+            }
+
+        } finally {
+            if (rs != null) rs.close();
+            if (pst != null) pst.close();
         }
 
-    } finally {
-        if (rs != null) rs.close();
-        if (pst != null) pst.close();
+        return isTrue;
     }
-
-    return isTrue;
-}
 
 
     public static int getNumOfIncorrectAnswers(Connection connection, int questionId) throws SQLException {
@@ -161,14 +161,19 @@ public class AmericanQuestion extends Question {
         PreparedStatement pst = null;
         int questionId;
         try {
-            questionId = Question.insertIntoTable(connection, strQuestion, diff);
-            if(questionId == -1)
+            if (!Question.isQuestionTextInTable(connection, strQuestion)) {
+                questionId = Question.insertIntoTable(connection, strQuestion, diff);
+            } else {
+                questionId = Question.getQuestionIdByQuestionText(connection, strQuestion);
+            }
+
+            if (questionId == -1)
                 return -1;
             pst = connection.prepareStatement("INSERT INTO AmericanQuestion (questionId) VALUES (?) RETURNING questionId;");
             pst.setInt(1, questionId);
             ResultSet rs = pst.executeQuery();
             int res = 0;
-            if(rs.next())
+            if (rs.next())
                 res = rs.getInt("questionId");
             rs.close();
             pst.close();
@@ -176,6 +181,21 @@ public class AmericanQuestion extends Question {
         } catch (SQLException e) {
             e.printStackTrace();
             return 0;
+        }
+    }
+
+    public static boolean isAnswerTextInAmericanQuestion(int questionId, String answerText, Connection connection) {
+        try (PreparedStatement pst = connection.prepareStatement("SELECT 1 FROM QuestionAnswer qa " +
+                "WHERE qa.questionId = ? AND qa.answerText = ?")) {
+            pst.setInt(1, questionId);
+            pst.setString(2, answerText);
+
+            try (ResultSet rs = pst.executeQuery()) {
+                return rs.next(); // Returns true if there is at least one result
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // Return false if an error occurs
         }
     }
 

@@ -52,6 +52,35 @@ public abstract class Question implements Serializable {
         this.diff = diff;
     }
 
+    public static int getQuestionIdByQuestionText(Connection connection, String questionText) throws SQLException {
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        try {
+            // Prepare the SQL statement to retrieve the questionId based on questionText
+            pst = connection.prepareStatement("SELECT questionId FROM Question WHERE questionText = ?");
+            pst.setString(1, questionText);
+
+            // Execute the query
+            rs = pst.executeQuery();
+
+            // If the questionText is found, return the questionId
+            if (rs.next()) {
+                return rs.getInt("questionId");
+            } else {
+                // Return -1 if the questionText does not exist
+                return -1;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        } finally {
+            // Clean up resources
+            if (rs != null) rs.close();
+            if (pst != null) pst.close();
+        }
+    }
+
+
     public static boolean isQuestionTextInTable(Connection connection, String questionText) throws SQLException {
         PreparedStatement pst = null;
         ResultSet rs = null;

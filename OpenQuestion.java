@@ -32,9 +32,14 @@ public class OpenQuestion extends Question {
         PreparedStatement pst = null;
         int questionId;
         try {
-            questionId = Question.insertIntoTable(connection, strQuestion, diff);
+            if (!Question.isQuestionTextInTable(connection, strQuestion)) {
+                questionId = Question.insertIntoTable(connection, strQuestion, diff);
+            } else {
+                questionId = Question.getQuestionIdByQuestionText(connection, strQuestion);
+            }
             if (questionId == -1)
                 return -1;
+
             pst = connection.prepareStatement("INSERT INTO OpenQuestion (questionId, schoolSolution) VALUES (?, ?) RETURNING questionId;");
             pst.setInt(1, questionId);
             pst.setString(2, answer);
@@ -45,7 +50,7 @@ public class OpenQuestion extends Question {
             e.printStackTrace();
             return 0;
         } finally {
-            if(pst != null)
+            if (pst != null)
                 pst.close();
         }
         return -1;

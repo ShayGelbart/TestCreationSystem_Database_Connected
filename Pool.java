@@ -2,12 +2,10 @@ package testing;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.net.ConnectException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Objects;
 
 public class Pool implements Serializable {
     /**
@@ -58,7 +56,7 @@ public class Pool implements Serializable {
             pst.setString(1, subName);
             pst.setInt(2, index - 1);
             ResultSet rs = pst.executeQuery();
-            if(rs.next())
+            if (rs.next())
                 return rs.getString("answerText");
             rs.close();
             pst.close();
@@ -76,7 +74,7 @@ public class Pool implements Serializable {
             pst.setString(1, subName);
             pst.setInt(2, qIndex - 1);
             rs = pst.executeQuery();
-            if(rs.next())
+            if (rs.next())
                 return rs.getInt("questionId");
         } catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -121,7 +119,7 @@ public class Pool implements Serializable {
             pst.setString(1, subName);
             ResultSet rs = pst.executeQuery();
             int check = 0;
-            if(rs.next())
+            if (rs.next())
                 check = rs.getInt(1);
             rs.close();
             pst.close();
@@ -131,15 +129,62 @@ public class Pool implements Serializable {
         }
     }
 
+    public static boolean isQuestionInSubjectPool(Connection connection, String questionText, String subjectName) {
+        try (PreparedStatement pst = connection.prepareStatement("SELECT q.questionText " +
+                "FROM Question q " +
+                "JOIN QuestionsPool qp ON q.questionId = qp.questionId " +
+                "WHERE q.questionText = ? AND qp.subjectName = ?")) {
+            pst.setString(1, questionText);
+            pst.setString(2, subjectName);
+
+            try (ResultSet rs = pst.executeQuery()) {
+                return rs.next(); // Returns true if there is at least one result
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // Return false if an error occurs
+        }
+    }
+
+    public static boolean isAnswerInSubjectPool(Connection connection, String answerText, String subjectName) throws SQLException {
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        try {
+            // Prepare the SQL statement to check if the answerText is in the pool of the given subject
+            pst = connection.prepareStatement("SELECT COUNT(*) FROM AnswersPool WHERE answerText = ? AND subjectName = ?");
+            pst.setString(1, answerText);
+            pst.setString(2, subjectName);
+
+            // Execute the query
+            rs = pst.executeQuery();
+
+            // Check if the result count is greater than 0
+            if (rs.next() && rs.getInt(1) > 0) {
+                return true; // answerText is in the pool for the subject
+            } else {
+                return false; // answerText is not in the pool for the subject
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            // Clean up resources
+            if (rs != null) rs.close();
+            if (pst != null) pst.close();
+        }
+    }
+
 
     // add answer to answer pool
     public static int addAnswerTextToPool(String answerStr, String subjectName, Connection connection) throws SQLException {
+        if (isAnswerInSubjectPool(connection, answerStr, subjectName)) {
+            return 0;
+        }
+
         try (PreparedStatement pst = connection.prepareStatement("INSERT INTO AnswersPool VALUES (?, ?)")) {
             pst.setString(1, answerStr);
             pst.setString(2, subjectName);
-            int result = pst.executeUpdate();
-            pst.close();
-            return result;
+            return pst.executeUpdate();
         } catch (SQLException e) {
             return -1;
         }
@@ -148,7 +193,7 @@ public class Pool implements Serializable {
 
     public static int countAmericanQuestionsWithMoreThanFourAnswers(Connection connection, String subName) throws SQLException {
         PreparedStatement pst;
-        ResultSet rs ;
+        ResultSet rs;
         try {
             pst = connection.prepareStatement("SELECT COUNT(*) FROM QuestionsPool QP" +
                     "JOIN QuestionAnswer QA ON QP.questionId = QA.questionId" +
@@ -158,7 +203,7 @@ public class Pool implements Serializable {
             pst.setString(1, subName);
             rs = pst.executeQuery();
             return rs.next() ? rs.getInt(1) : 0;
-        }catch(SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return -1;
@@ -341,9 +386,6 @@ public class Pool implements Serializable {
 //        }
 //        return str;
 //    }
-
-
-
 
 
     public static String questionsSeperatedFromAnswers(Connection connection, String subjectName) throws
