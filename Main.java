@@ -15,7 +15,7 @@ public class Main {
         try {
             Class.forName("org.postgresql.Driver"); // line 18
             String dbUrl = "jdbc:postgresql:TestCreation";
-            connection = DriverManager.getConnection(dbUrl, "postgres", "shay0307");
+            connection = DriverManager.getConnection(dbUrl, "postgres", "password");
             Statement stmt = connection.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM Question");
             while (rs.next()) {
@@ -24,21 +24,16 @@ public class Main {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-        //Subjects subjects = new Subjects();
-//        File f = new File("Subjects.dat");
-//        if (!f.exists())
-//            f.createNewFile();
-//        else if (f.length() > 0)
-//            subjects.readFromBinaryFile();
+
         int mainChoice;
         do {
             System.out.println("Welcome to the main menu");
-            System.out.println("If you would like to create a test and pick question and answers,type 1");
-            System.out.println("If you would like to alter a pool or create a new pool type 2");
-            System.out.println("If you would like to exit the program(all data will be lost) type 0");
-            System.out.println("Enter your choice");
-            System.out.println("Notice than once you've finished altering the pool you cannot go back to it!");
-            mainChoice = sc.nextInt();
+            System.out.println("Enter your choice\n" + "1.Create a test and pick question and answers\n"
+                    + "2.Alter a pool or create a new pool\n" +
+                    "3.EXIT" +
+                    "Notice than once you've finished altering the pool you cannot go back to it!");
+
+            mainChoice = readInRange(0, 2, sc);
             switch (mainChoice) {
                 case 1:
                     testCreation(sc, connection);
@@ -53,12 +48,11 @@ public class Main {
                         System.out.println("Try one of the options below");
             }
         } while (mainChoice != 0);
-        // subjects.writeToBinaryFile();
     }
 
     // test creation
     public static void testCreation(Scanner sc, Connection connection) throws
-            IOException, LessThanThreeAnswersException, SQLException {
+            IOException, SQLException {
         int amountOfPools = Subjects.getAmountOfPools(connection);
         if (amountOfPools == 0) {
             System.out.println("There is no pool to make a test out of, create a pool first");
@@ -71,22 +65,19 @@ public class Main {
         Examable test;
         System.out.println(Subjects.toStringSubjectNames(connection));
         System.out.println("Enter the index of the subject which you would like your test to be in:");
-        int index = sc.nextInt();
+        int index = readInRange(0, amountOfPools, sc);
         String subjectName = Subjects.getPoolsAtIndex(index, connection);
         int numOfQuestions = 0;
         do {
             try {
                 System.out.println("Enter how many question do you want in the test");
-                numOfQuestions = sc.nextInt();
+                numOfQuestions = readInRange(0, Pool.getAmountOfQuestionsInSubjectPool(connection, subjectName), sc);
                 if (numOfQuestions > 10)
                     throw new AmountOfQuestionsException("The number of questions must be below or equal 10.");
             } catch (AmountOfQuestionsException e) {
                 System.out.println(e.getMessage());
-            } catch (InputMismatchException e) {
-                System.out.println("Invalid input. Please enter a valid number.");
-                sc.next(); // Clear the invalid input from the scanner
             }
-        } while (numOfQuestions > 10 || numOfQuestions <= 0 || numOfQuestions > Pool.getAmountOfQuestionsInSubjectPool(connection, subjectName));
+        } while (numOfQuestions > 10);
         System.out.println("Do you want to create an automatic test or making it manually?");
         System.out.println("Enter true for automatic, false for manual");
         boolean isAuto = sc.nextBoolean();
@@ -106,12 +97,9 @@ public class Main {
         do {
             System.out.println("Welcome to the mini menu");
             System.out.println(
-                    "If you would like to create a new pool and pick question and answers for that subject,type 1");
-            System.out.println("If you would like to delete a pool type 2");
-            System.out.println("If you would like to alter an existing pool type 3");
-            System.out.println("Type 0 in order to go back to main menu");
-            System.out.println("Enter your choice");
-            editOrNewChoice = sc.nextInt();
+                    "1.Create a new pool and pick question and answers for that subject\n" + "2.Delete a pool\n" + "3.Alter an existing pool\n" +
+                            "0.BACK TO MAIN MENU\n" + "Enter your choice:");
+            editOrNewChoice = readInRange(0, 3, sc);
             switch (editOrNewChoice) {
                 case 1:
                     createAndDefineNewPool(sc, connection);
@@ -122,8 +110,6 @@ public class Main {
                 case 3:
                     alterPoolMenu(sc, connection);
                     break;
-                case 0:
-                    System.out.println("Goodbye,have a good day:)");
                 default:
                     if (editOrNewChoice != 0)
                         System.out.println("Try one of the options below");
@@ -419,6 +405,50 @@ public class Main {
             choice = sc.nextInt();
         }
         return options[choice];
+    }
+
+    public static <T extends Number> T readInRange(T min, T max, Scanner scanner) {
+
+        T value = null;
+        boolean finished = false;
+        while (!finished) {
+            try {
+                if (min instanceof Integer) {
+                    value = (T) Integer.valueOf(scanner.nextInt());
+                } else if (min instanceof Double) {
+                    value = (T) Double.valueOf(scanner.nextDouble());
+                } else if (min instanceof Long) {
+                    value = (T) Long.valueOf(scanner.nextLong());
+                } else {
+                    System.out.println("I don't know what type of number this is...");
+                }
+
+                if (min.doubleValue() <= value.doubleValue() && value.doubleValue() <= max.doubleValue()) {
+                    finished = true;
+                } else {
+                    System.out.println("Please enter a valid number: ");
+                    scanner.nextLine();
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Please enter a valid number: ");
+                scanner.nextLine();
+            }
+
+        }
+        scanner.nextLine();
+        return value;
+    }
+
+    public static String checkString(Scanner scanner) {
+        String text = null;
+
+        text = scanner.nextLine();
+
+        while (text == null || text.isEmpty()) {
+            System.out.println("Please enter a valid string: ");
+            text = scanner.nextLine();
+        }
+        return text;
     }
 
 
