@@ -61,12 +61,12 @@ public class Subjects implements Serializable {
         }
     }
 
-    public static boolean isSubjectNameInTable(Connection connection, String subjectName) throws SQLException {
+    public static boolean isSubjectInTable(Connection connection, String subjectName) throws SQLException {
         PreparedStatement pst = null;
         ResultSet rs = null;
         try {
             // Prepare the SQL statement to check for the existence of the subjectName
-            pst = connection.prepareStatement("SELECT 1 FROM Actions WHERE subjectName = ?");
+            pst = connection.prepareStatement("SELECT 1 FROM Pool WHERE subjectName = ?");
             pst.setString(1, subjectName);
 
             // Execute the query
@@ -87,6 +87,10 @@ public class Subjects implements Serializable {
 
     // adds a test to the data base
     public static boolean insertToTable(String subject, Connection connection) throws SQLException {
+        if(isSubjectInTable(connection, subject)) {
+            return false;
+        }
+
         PreparedStatement pst = null;
         boolean check;
         try {

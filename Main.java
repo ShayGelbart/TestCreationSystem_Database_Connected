@@ -244,7 +244,7 @@ public class Main {
     }
 
     // Helper function
-    private static int handleOpenQuestion(String subject, String strQuestion, String diff, Scanner sc, Connection connection) throws SQLException {
+    private static void handleOpenQuestion(String subject, String strQuestion, String diff, Scanner sc, Connection connection) throws SQLException {
         int choice = 2;
         String answer;
 
@@ -259,12 +259,12 @@ public class Main {
             answer = Pool.getAnswerTextArrayAtIndex(connection, subject, solutionIndex);
         } else {
             System.out.println("Enter your new answer:");
-            answer = sc.next();
+            answer = checkString(sc);
             if (!AnswerText.isAnswerTextInTable(connection, answer))
                 if (!AnswerText.InsertToTable(connection, answer)) { // if it already exists in the AnswerText table it's fine(rowsAffected >= 0),
                     // if it was an exception, the user should try again.
                     System.out.println("An error occurred, please try again");
-                    return 0;
+                    return;
                 }
 
             int addAnswerToPoolCheck;
@@ -274,7 +274,7 @@ public class Main {
                     System.out.println("Successfully added a new answer to the pool");
                 } else { // exception happened, kicked out of the function
                     System.out.println("An error occurred, please try again");
-                    return 0;
+                    return;
                 }
             }
         }
@@ -283,10 +283,8 @@ public class Main {
         if (newId == 0) { // if it already exists in the AnswerText table it's fine( > 0),
             // if it was an exception(==0), the user should try again.
             System.out.println("An error occurred, please try again");
-            return 0;
+            return;
         }
-
-        return newId;
     }
 
     // Helper function
