@@ -12,43 +12,6 @@ public class Pool implements Serializable {
      *
      */
     @Serial
-//    private static final long serialVersionUID = 1L;
-//    private ArrayList<AnswerText> answerTextArray;
-//    private ArrayList<Question> questionArray;
-//    private String subName;
-//
-//    public Actions(String subName) {
-//        this.answerTextArray = new ArrayList<>();
-//        this.questionArray = new ArrayList<>();
-//        this.subName = subName;
-//    }
-//
-//    public Actions(Actions other) {
-//        this.answerTextArray = new ArrayList<>(other.answerTextArray); // Perform a deep copy of answerTextArray
-//        this.questionArray = new ArrayList<>(other.questionArray); // Perform a deep copy of questionArray
-//        this.subName = other.subName;
-//    }
-//
-//    public ArrayList<AnswerText> getAnswerTextArray() {
-//        return answerTextArray;
-//    }
-//
-//    public ArrayList<Question> getQuestionArray() {
-//        return questionArray;
-//    }
-//
-//    public void setQuestionArray(ArrayList<Question> questionArray) {
-//        this.questionArray = questionArray;
-//    }
-//
-//    public void setAnswerTextArray(ArrayList<AnswerText> answerTextArray) {
-//        this.answerTextArray = answerTextArray;
-//    }
-//
-//    public Question getQuestionArrayAtIndex(int index) {
-//        return questionArray.get(index - 1);
-//    }
-//
     public static String getAnswerTextArrayAtIndex(Connection connection, String subName, int index) {
         PreparedStatement pst;
         try {
