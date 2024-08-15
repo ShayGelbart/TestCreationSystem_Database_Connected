@@ -30,8 +30,7 @@ public class Main {
             System.out.println("Welcome to the main menu");
             System.out.println("Enter your choice\n" + "1.Create a test and pick question and answers\n"
                     + "2.Alter a pool or create a new pool\n" +
-                    "3.EXIT" +
-                    "Notice than once you've finished altering the pool you cannot go back to it!");
+                    "3.EXIT" );
 
             mainChoice = readInRange(0, 2, sc);
             switch (mainChoice) {
