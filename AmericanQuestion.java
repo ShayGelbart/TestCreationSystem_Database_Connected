@@ -171,7 +171,7 @@ public class AmericanQuestion extends Question {
                 return -1;
             pst = connection.prepareStatement("INSERT INTO AmericanQuestion (questionId) VALUES (?);");
             pst.setInt(1, questionId);
-            pst.executeQuery();
+            pst.executeUpdate();
             pst.close();
             return questionId;
         } catch (SQLException e) {

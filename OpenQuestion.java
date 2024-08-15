@@ -43,7 +43,7 @@ public class OpenQuestion extends Question {
             pst = connection.prepareStatement("INSERT INTO OpenQuestion (questionId, schoolSolution) VALUES (?, ?);");
             pst.setInt(1, questionId);
             pst.setString(2, answer);
-            pst.executeQuery();
+            pst.executeUpdate();
             return questionId;
         } catch (SQLException e) {
             e.printStackTrace();
