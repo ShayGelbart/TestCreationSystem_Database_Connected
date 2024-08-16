@@ -38,9 +38,10 @@ public class ManualExam implements Examable {
                 }
 
                 int resAddToTest = Test.addQuestionToTestArray(testId, qId, connection);
-                if (resAddToTest == 1)
+                if (resAddToTest == 1) {
                     System.out.println("Successfully added the question to the test");
-                else if (resAddToTest == 0)
+                    numOfQuestions--;
+                } else if (resAddToTest == 0)
                     System.out.println("Question is already in the test, try again with a different question");
                 else {
                     System.out.println("An error occurred, please try again");

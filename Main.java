@@ -358,7 +358,7 @@ public class Main {
         System.out.println(Pool.answerTextPoolToString(connection, subject));
         System.out.println("Enter the answer's index:");
         int ansIndex = readInRange(0, Pool.getAmountOfAnswersInSubjectPool(connection, subject), sc);
-        String answerText = AnswerText.getAnswerTextByIndex(ansIndex, subject, connection);
+        String answerText = Pool.getAnswerTextArrayAtIndex(connection, subject, ansIndex);
 
         System.out.println("Is the answer true or false (true/false)?");
         boolean isTrue = sc.nextBoolean();

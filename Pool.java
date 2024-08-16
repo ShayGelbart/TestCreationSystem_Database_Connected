@@ -33,7 +33,7 @@ public class Pool implements Serializable {
         PreparedStatement pst = null;
         ResultSet rs = null;
         try {
-            pst = connection.prepareStatement("SELECT * FROM QuestionsPool WHERE subjectName LIKE ? LIMIT 1 OFFSET ? RETURNING questionId");
+            pst = connection.prepareStatement("SELECT * FROM Question WHERE subjectName LIKE ? LIMIT 1 OFFSET ?");
             pst.setString(1, subName);
             pst.setInt(2, qIndex - 1);
             rs = pst.executeQuery();

@@ -20,10 +20,10 @@ public class AutomaticExam implements Examable {
         testId = Test.insertToTable(connection, subjectName);
         if (testId == 0) // exception
             return false;
-
-        int reassignedCheck = Pool.countAmericanQuestionsWithMoreThanFourAnswers(connection, subjectName);
-        if (reassignedCheck < numOfQuestions)
-            return false;
+        int reassignedCheck;
+//         = Pool.countAmericanQuestionsWithMoreThanFourAnswers(connection, subjectName);
+//        if (reassignedCheck < numOfQuestions)
+//            return false;
 
         while (numOfQuestions > 0) { // getting as much questions as input
             reassignedCheck = Pool.getAmountOfQuestionsInSubjectPool(connection, subjectName);

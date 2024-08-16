@@ -22,9 +22,13 @@ public class Test {
     public static int insertToTable(Connection connection, String subjectName) {
         PreparedStatement pst;
         try {
-            pst = connection.prepareStatement("INSERT INTO Test VALUES (?) RETURNING testId");
+            pst = connection.prepareStatement("INSERT INTO Test (subjectName) VALUES (?) RETURNING testId");
             pst.setString(1, subjectName);
-            int res = pst.executeUpdate();
+            ResultSet rs = pst.executeQuery();
+             int res = 0;
+            if (rs.next()) {
+                res = rs.getInt(1);
+            }
             pst.close();
             return res;
         } catch (SQLException e) {
@@ -175,7 +179,7 @@ public class Test {
         PreparedStatement pst = null;
         ResultSet rs = null;
         try {
-            pst = connection.prepareStatement("SELECT * FROM TestQuestions WHERE testId = ?");
+            pst = connection.prepareStatement("SELECT * FROM TestQuestions t JOIN Question q ON t.questionId = q.questionId WHERE testId = ?");
             pst.setInt(1, testId);
             rs = pst.executeQuery();
         } catch (SQLException e) {
@@ -184,9 +188,9 @@ public class Test {
 
         while (rs.next()) {
             questionId = rs.getInt("questionId");
-            str = (i + 1) + ")" + rs.getString("questionText") + "\n";
+            str = (i + 1) + ")";
             if (Pool.isQuestionType(connection, questionId, "AmericanQuestion")) {
-                str += creatingSolutionQuestionsArray(connection, questionId);
+                str += rs.getString("questionText") + "\n" + creatingSolutionQuestionsArray(connection, questionId);
             } else {
                 str += OpenQuestion.getOpenQuestionTextAndDiff(questionId, connection) + OpenQuestion.getOpenQuestionSolution(questionId, connection);
             }
@@ -201,13 +205,13 @@ public class Test {
     public static String manualFileAddedAnswersToString(Connection connection, int testId) throws SQLException { // test to file
         int i = 0;
         String str = "";
-        PreparedStatement pst;
+        PreparedStatement pst = null;
         ResultSet rs = null;
         try {
-            pst = connection.prepareStatement("SELECT * FROM TestQuestions WHERE testId = ?");
+            pst = connection.prepareStatement("SELECT * FROM TestQuestions t JOIN Question q ON t.questionId = q.questionId WHERE testId = ?");
             pst.setInt(1, testId);
             rs = pst.executeQuery();
-            pst.close();
+            
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -215,18 +219,18 @@ public class Test {
         int questionId;
         while (rs.next()) {
             questionId = rs.getInt("questionId");
-            str = rs.getString("difficulty") + ": " + rs.getString("answerText") + "\n";
+            str = rs.getString("difficulty") + ": " + rs.getString("questionText") + "\n";
             if (Pool.isQuestionType(connection, questionId, "AmericanQuestion")) {
-                str += "(American question), " + str + AmericanQuestion.getAmericanQuestionAnswers(connection, questionId);
+                str = "(American question), " + str + AmericanQuestion.getAmericanQuestionAnswers(connection, questionId);
                 str += "Answer-Not a single answer is correct\n";
                 str += "Answer-More than one answer is correct\n\n";
             } else // open question
-                str += "(Open question), " + str;
+                str = "(Open question), " + str;
             str = (i + 1) + ")" + str;
             i++;
         }
         rs.close();
-
+        pst.close();
         return str;
     }
 
@@ -249,11 +253,11 @@ public class Test {
             questionId = rs.getInt("questionId");
             str = rs.getString("difficulty") + ": " + rs.getString("answerText") + "\n";
             if (Pool.isQuestionType(connection, questionId, "AmericanQuestion")) {
-                str += "(American question), " + str + AmericanQuestion.getAmericanQuestionAnswers(connection, questionId);
+                str = "(American question), " + str + AmericanQuestion.getAmericanQuestionAnswers(connection, questionId);
                 str += "Answer-Not a single answer is correct\n";
                 str += "Answer-More than one answer is correct\n\n";
             } else // open question
-                str += "(Open question), " + str;
+                str = "(Open question), " + str;
             str = (i + 1) + ")" + str;
             i++;
         }
