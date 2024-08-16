@@ -402,10 +402,15 @@ public class Main {
 
     public static void printPlusDeleteQuestionFromArray(String subjectName, Connection connection, Scanner sc) throws SQLException {
         System.out.println(Pool.questionPoolToString(subjectName, connection));
+        int amountOfQuestion = Pool.getAmountOfQuestionsInSubjectPool(connection, subjectName);
+        if(amountOfQuestion <= 0) {
+            System.out.println("Try adding a question\n");
+            return;
+        }
         System.out.println("Enter the index of the question you want to delete");
-        int index = readInRange(0, Pool.getAmountOfQuestionsInSubjectPool(connection, subjectName), sc);
+        int index = readInRange(0, amountOfQuestion, sc);
 
-        if (Pool.deleteQuestionFromArray(index, connection))
+        if (Pool.deleteQuestionFromArray(index, subjectName, connection))
             System.out.println("Successfully deleted question number-" + index);
         else
             System.out.println("Failed to delete question from array, try with a different index");

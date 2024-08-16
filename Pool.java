@@ -65,13 +65,14 @@ public class Pool implements Serializable {
 //    }
 
     public static int getAmountOfQuestionsInSubjectPool(Connection connection, String subName) throws SQLException {
-        try (PreparedStatement pst = connection.prepareStatement("SELECT COUNT(*) FROM QuestionsPool WHERE subjectName LIKE ?")) {
+        try (PreparedStatement pst = connection.prepareStatement("SELECT COUNT(*) FROM Question WHERE subjectName LIKE ?")) {
             pst.setString(1, subName);
             ResultSet rs = pst.executeQuery();
-            rs.next();
+            int res = 0;
+            if (rs.next())
+                res =  rs.getInt(1);
             rs.close();
-            pst.close();
-            return rs.getInt(1);
+            return res;
         } catch (SQLException e) {
             return -1;
         }
@@ -104,7 +105,7 @@ public class Pool implements Serializable {
             // Execute the query
             rs = pst.executeQuery();
 
-            return  rs.next();
+            return rs.next();
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
@@ -152,18 +153,19 @@ public class Pool implements Serializable {
 
 
     // delete question to answer pool
-    public static boolean deleteQuestionFromArray(int index, Connection connection) throws SQLException {
+    public static boolean deleteQuestionFromArray(int index, String subjectName, Connection connection) throws SQLException {
         PreparedStatement pst = null;
         try {
-            pst = connection.prepareStatement("SELECT questionId FROM QuestionsPool LIMIT 1 OFFSET ?");
-            pst.setInt(1, index);
+            pst = connection.prepareStatement("SELECT questionId FROM Question WHERE subjectName = ? LIMIT 1 OFFSET ?");
+            pst.setString(1, subjectName);
+            pst.setInt(2, index - 1);
             ResultSet rs = pst.executeQuery();
             if (rs.next()) {
                 int questionId = rs.getInt("questionId");
                 rs.close();
                 pst.close();
 
-                pst = connection.prepareStatement("DELETE FROM QuestionsPool WHERE questionId = ?");
+                pst = connection.prepareStatement("DELETE FROM Question WHERE questionId = ?");
                 pst.setInt(1, questionId);
                 return pst.executeUpdate() > 0;
             }
