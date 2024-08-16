@@ -21,7 +21,7 @@ public class ManualExam implements Examable {
                 System.out.println("An error occurred, please try again");
                 return false;
             }
-            System.out.println(Pool.questionsSeperatedFromAnswers(connection, subjectName));
+            System.out.println(Pool.questionPoolToString( subjectName,connection));
             int numOfQuestionsInPool;
             while (numOfQuestions > 0) {
                 do {

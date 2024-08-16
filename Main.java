@@ -63,32 +63,41 @@ public class Main {
 
         Examable test;
         System.out.println(Subjects.toStringSubjectNames(connection));
-        System.out.println("Enter the index of the subject which you would like your test to be in:");
-        int index = readInRange(0, amountOfPools, sc);
-        String subjectName = Subjects.getPoolsAtIndex(index, connection);
-        int numOfQuestions = 0;
-        do {
-            try {
-                System.out.println("Enter how many question do you want in the test");
-                numOfQuestions = readInRange(0, Pool.getAmountOfQuestionsInSubjectPool(connection, subjectName), sc);
-                if (numOfQuestions > 10)
-                    throw new AmountOfQuestionsException("The number of questions must be below or equal 10.");
-            } catch (AmountOfQuestionsException e) {
-                System.out.println(e.getMessage());
-            }
-        } while (numOfQuestions > 10);
-        System.out.println("Do you want to create an automatic test or making it manually?");
-        System.out.println("Enter true for automatic, false for manual");
-        boolean isAuto = sc.nextBoolean();
-        if (isAuto) {
-            test = new AutomaticExam();
+        if (amountOfPools <= 0) {
+            System.out.println("There's no subjects. Please try adding new subject.");
         } else {
-            test = new ManualExam();
+            System.out.println("Enter the index of the subject which you would like your test to be in:");
+            int index = readInRange(0, amountOfPools, sc);
+            String subjectName = Subjects.getPoolsAtIndex(index, connection);
+            int numOfQuestions = 0;
+            int amountOfQuestionsInSubject = Pool.getAmountOfQuestionsInSubjectPool(connection, subjectName);
+            if (amountOfQuestionsInSubject < 0) {
+                System.out.println("There's no questions in the subject.Try adding new questions");
+            } else {
+                do {
+                    try {
+                        System.out.println("Enter how many question do you want in the test");
+                        numOfQuestions = readInRange(0, amountOfQuestionsInSubject, sc);
+                        if (numOfQuestions > 10)
+                            throw new AmountOfQuestionsException("The number of questions must be below or equal 10.");
+                    } catch (AmountOfQuestionsException e) {
+                        System.out.println(e.getMessage());
+                    }
+                } while (numOfQuestions > 10);
+                System.out.println("Do you want to create an automatic test or making it manually?");
+                System.out.println("Enter true for automatic, false for manual");
+                boolean isAuto = sc.nextBoolean();
+                if (isAuto) {
+                    test = new AutomaticExam();
+                } else {
+                    test = new ManualExam();
+                }
+                if (test.createExam(subjectName, numOfQuestions, connection))
+                    System.out.println("Successfully created a test");
+                else
+                    System.out.println("Wasn't able to create a test, try again after altering the pool");
+            }
         }
-        if (test.createExam(subjectName, numOfQuestions, connection))
-            System.out.println("Successfully created a test");
-        else
-            System.out.println("Wasn't able to create a test, try again after altering the pool");
     }
 
     public static void editOrNewMenu(Scanner sc, Connection connection) throws SQLException {
@@ -403,7 +412,7 @@ public class Main {
     public static void printPlusDeleteQuestionFromArray(String subjectName, Connection connection, Scanner sc) throws SQLException {
         System.out.println(Pool.questionPoolToString(subjectName, connection));
         int amountOfQuestion = Pool.getAmountOfQuestionsInSubjectPool(connection, subjectName);
-        if(amountOfQuestion <= 0) {
+        if (amountOfQuestion <= 0) {
             System.out.println("Try adding a question\n");
             return;
         }
