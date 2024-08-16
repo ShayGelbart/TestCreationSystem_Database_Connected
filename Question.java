@@ -81,14 +81,14 @@ public abstract class Question implements Serializable {
     }
 
 
-    public static boolean isQuestionTextInTable(Connection connection, String questionText) throws SQLException {
+    public static boolean isQuestionTextInTable(Connection connection, String questionText, String subjectName) throws SQLException {
         PreparedStatement pst = null;
         ResultSet rs = null;
         try {
             // Prepare the SQL statement to check for the existence of the questionText
-            pst = connection.prepareStatement("SELECT 1 FROM Question WHERE questionText = ?");
+            pst = connection.prepareStatement("SELECT 1 FROM Question WHERE questionText = ? AND subjectName = ?");
             pst.setString(1, questionText);
-
+            pst.setString(2, subjectName);
             // Execute the query
             rs = pst.executeQuery();
 
@@ -104,10 +104,11 @@ public abstract class Question implements Serializable {
         }
     }
 
-    public static int insertIntoTable(Connection connection, String questionText, String diff) throws SQLException {
-        try (PreparedStatement pst = connection.prepareStatement("INSERT INTO Question (questionText, difficulty) VALUES (?, CAST(? AS difficulty)) RETURNING questionId")) {
+    public static int insertIntoTable(Connection connection, String questionText, String subjectName, String diff) throws SQLException {
+        try (PreparedStatement pst = connection.prepareStatement("INSERT INTO Question (questionText, SubjectName, difficulty) VALUES (?, ?, CAST(? AS difficulty)) RETURNING questionId")) {
             pst.setString(1, questionText);
-            pst.setString(2, diff);
+            pst.setString(2, subjectName);
+            pst.setString(3, diff);
             ResultSet rs = pst.executeQuery();
             if (rs.next()) {
                 return rs.getInt("questionId");

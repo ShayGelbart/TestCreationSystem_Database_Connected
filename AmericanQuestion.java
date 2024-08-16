@@ -157,14 +157,14 @@ public class AmericanQuestion extends Question {
     }
 
 
-    public static int InsertToTable(Connection connection, String strQuestion, String diff) {
-        PreparedStatement pst = null;
+    public static int InsertToTable(Connection connection, String strQuestion, String subjectName, String diff) {
+        PreparedStatement pst;
         int questionId;
         try {
-            if (!Question.isQuestionTextInTable(connection, strQuestion)) {
-                questionId = Question.insertIntoTable(connection, strQuestion, diff);
+            if (!Question.isQuestionTextInTable(connection, strQuestion, subjectName)) {
+                questionId = Question.insertIntoTable(connection, strQuestion, subjectName, diff);
             } else {
-                questionId = Question.getQuestionIdByQuestionText(connection, strQuestion);
+                questionId = -1;
             }
 
             if (questionId == -1)

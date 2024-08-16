@@ -28,14 +28,14 @@ public class OpenQuestion extends Question {
     }
 
     // returns int so the Id will be passed to another function later on
-    public static int InsertToTable(Connection connection, String strQuestion, String diff, String answer) throws SQLException {
+    public static int InsertToTable(Connection connection, String strQuestion, String subjectName, String diff, String answer) throws SQLException {
         PreparedStatement pst = null;
         int questionId;
         try {
-            if (!Question.isQuestionTextInTable(connection, strQuestion)) {
-                questionId = Question.insertIntoTable(connection, strQuestion, diff);
+            if (!Question.isQuestionTextInTable(connection, strQuestion, subjectName)) {
+                questionId = Question.insertIntoTable(connection, strQuestion, subjectName, diff);
             } else {
-                questionId = Question.getQuestionIdByQuestionText(connection, strQuestion);
+                questionId = -1;
             }
             if (questionId == -1)
                 return -1;

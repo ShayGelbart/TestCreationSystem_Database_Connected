@@ -92,23 +92,6 @@ public class Pool implements Serializable {
         }
     }
 
-    public static boolean isQuestionInSubjectPool(Connection connection, String questionText, String subjectName) {
-        try (PreparedStatement pst = connection.prepareStatement("SELECT q.questionText " +
-                "FROM Question q " +
-                "JOIN QuestionsPool qp ON q.questionId = qp.questionId " +
-                "WHERE q.questionText = ? AND qp.subjectName = ?")) {
-            pst.setString(1, questionText);
-            pst.setString(2, subjectName);
-
-            try (ResultSet rs = pst.executeQuery()) {
-                return rs.next(); // Returns true if there is at least one result
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false; // Return false if an error occurs
-        }
-    }
-
     public static boolean isAnswerInSubjectPool(Connection connection, String answerText, String subjectName) throws SQLException {
         PreparedStatement pst = null;
         ResultSet rs = null;
@@ -294,7 +277,7 @@ public class Pool implements Serializable {
         int i = 0;
         String str = "Here is the question pool:" + "\n";
         try {
-            pst = connection.prepareStatement("SELECT questionId FROM QuestionsPool WHERE subjectName = ?");
+            pst = connection.prepareStatement("SELECT questionId FROM Question WHERE subjectName = ?");
             pst.setString(1, subjectName);
             rs = pst.executeQuery();
 

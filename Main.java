@@ -134,8 +134,8 @@ public class Main {
         while (numOfQuestions > 0) {
             System.out.println("Enter the question's text:");
             String qText = checkString(sc);
-            if(Pool.isQuestionInSubjectPool(connection, qText, subject)) {
-                System.out.println("Question " + qText + " already exists");
+            if (Question.isQuestionTextInTable(connection, qText, subject)) {
+                System.out.println("Question " + qText + " already exists in the" + subject + " pool");
             } else {
                 String diff = defineDifficulty(sc, connection);
                 if (diff == null) {
@@ -236,7 +236,7 @@ public class Main {
 
         System.out.println("Enter your new question (string):");
         String strQuestion = checkString(sc);
-        if (Pool.isQuestionInSubjectPool(connection, strQuestion, subjectName)) {
+        if (Question.isQuestionTextInTable(connection, strQuestion, subjectName)) {
             System.out.println("Question is already in the pool, try again");
             return;
         }
@@ -285,25 +285,25 @@ public class Main {
                 }
             }
         }
+        int newId;
 
-        int newId = OpenQuestion.InsertToTable(connection, strQuestion, diff, answer);
-        if (newId == 0) { // if it was an exception(==0), the user should try again.
+        newId = OpenQuestion.InsertToTable(connection, strQuestion, subject, diff, answer);
+        if (newId <= 0) { // if it was an exception(==0), the user should try again.
             System.out.println("An error occurred, please try again");
-            return;
         }
 
-        if (Pool.addQuestionToPool(connection, newId, subject)) {
-            System.out.println("Successfully added a new open question to the " + subject + " pool.");
-        } else {
-            System.out.println("Failed to add the open question, try again.");
-        }
+//        if (Pool.addQuestionToPool(connection, newId, subject)) {
+        System.out.println("Successfully added a new open question to the " + subject + " pool.");
+//        } else {
+//            System.out.println("Failed to add the open question, try again.");
+//        }
     }
 
     // Helper function
     private static void handleAmericanQuestion(String subject, String strQuestion, String diff, Scanner sc, Connection connection) throws SQLException {
         //Question aq = new AmericanQuestion(strQuestion, diff);
-        int newId = AmericanQuestion.InsertToTable(connection, strQuestion, diff), returnValue, ansAmount;
-        if (newId == 0) { // if it was an exception(==0), the user should try again.
+        int newId = AmericanQuestion.InsertToTable(connection, strQuestion, subject, diff), returnValue, ansAmount;
+        if (newId <= 0) { // if it was an exception(==0), the user should try again.
             System.out.println("An error occurred, please try again");
             return;
         }
@@ -324,11 +324,11 @@ public class Main {
             }
         }
 
-        if (Pool.addQuestionToPool(connection, newId, subject)) {
-            System.out.println("Successfully added a new American question to the " + subject + " pool.");
-        } else {
-            System.out.println("Failed to add the American question, try again.");
-        }
+        //if (Pool.addQuestionToPool(connection, newId, subject)) {
+        System.out.println("Successfully added a new American question to the " + subject + " pool.");
+        // } else {
+        //   System.out.println("Failed to add the American question, try again.");
+        // }
     }
 
     public static int addAnswerToAmericanQuestion(String subjectName, int id, Scanner sc, Connection connection) throws SQLException {
