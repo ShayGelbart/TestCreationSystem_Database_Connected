@@ -232,6 +232,7 @@ public class Main {
         System.out.println("Type true if you would like to add an open question.");
         System.out.println("Type false if you would like to add an American question.");
         boolean isOpen = sc.nextBoolean();
+        sc.nextLine();
 
         System.out.println("Enter your new question (string):");
         String strQuestion = checkString(sc);
