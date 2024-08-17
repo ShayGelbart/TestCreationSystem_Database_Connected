@@ -31,27 +31,27 @@ public class AnswerText implements Serializable {
     }
 
     public static boolean isAnswerTextInTable(Connection connection, String answerText) throws SQLException {
-    PreparedStatement pst = null;
-    ResultSet rs = null;
-    try {
-        // Prepare the SQL statement to check for the existence of the answerText
-        pst = connection.prepareStatement("SELECT 1 FROM AnswerText WHERE answerText = ?");
-        pst.setString(1, answerText);
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        try {
+            // Prepare the SQL statement to check for the existence of the answerText
+            pst = connection.prepareStatement("SELECT 1 FROM AnswerText WHERE answerText = ?");
+            pst.setString(1, answerText);
 
-        // Execute the query
-        rs = pst.executeQuery();
+            // Execute the query
+            rs = pst.executeQuery();
 
-        // If the result set has at least one row, the answerText exists
-        return rs.next();
-    } catch (SQLException e) {
-        e.printStackTrace();
-        return false;
-    } finally {
-        // Clean up resources
-        if (rs != null) rs.close();
-        if (pst != null) pst.close();
+            // If the result set has at least one row, the answerText exists
+            return rs.next();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            // Clean up resources
+            if (rs != null) rs.close();
+            if (pst != null) pst.close();
+        }
     }
-}
 
 
     public static Boolean InsertToTable(Connection connection, String answer) {
@@ -75,8 +75,8 @@ public class AnswerText implements Serializable {
             pst.setInt(3, ansIndex - 1);
             ResultSet rs = pst.executeQuery();
             String answerText = "";
-            if(rs.next())
-             answerText = rs.getString("answerText");
+            if (rs.next())
+                answerText = rs.getString("answerText");
             rs.close();
             pst.close();
             return answerText;
@@ -102,5 +102,21 @@ public class AnswerText implements Serializable {
 
     public String toString() {
         return answerText;
+    }
+
+    public static String getAnswerTextTable(Connection connection) throws SQLException {
+        StringBuilder result = new StringBuilder("AnswerText Table:\n");
+        String query = "SELECT * FROM AnswerText";
+        try (PreparedStatement pst = connection.prepareStatement(query);
+             ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                String answerText = rs.getString("answerText");
+                result.append("AnswerText: ").append(answerText).append("\n");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return result.toString();
     }
 }
