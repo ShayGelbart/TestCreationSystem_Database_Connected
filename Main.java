@@ -38,6 +38,7 @@ public class Main {
                     break;
                 case 3:
                     printAllDataBase(connection);
+                    break;
                 case 0:
                     System.out.println("Goodbye,have a good day:)");
                 default:
@@ -217,6 +218,7 @@ public class Main {
                     break;
                 case 5:
                     deleteAnswerFromPool(subjectName, sc, connection);
+                    break;
                 case 0: // exit back to main menu
                     System.out.println("You've decided to exit this menu");
                     break;
