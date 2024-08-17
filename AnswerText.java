@@ -13,23 +13,8 @@ public class AnswerText implements Serializable {
      *
      */
     @Serial
-    private static final long serialVersionUID = 1L;
-    private String answerText;
 
-    public AnswerText(String answerText) {
-        this.answerText = answerText;
-    }
-
-    public AnswerText(AnswerText other) {
-        this.answerText = other.answerText;
-    }
-
-
-    // no set for the text because there were no request for it
-    public String getAnswerText() {
-        return answerText;
-    }
-
+    //checks if answer is in the database
     public static boolean isAnswerTextInTable(Connection connection, String answerText) throws SQLException {
         PreparedStatement pst = null;
         ResultSet rs = null;
@@ -53,7 +38,7 @@ public class AnswerText implements Serializable {
         }
     }
 
-
+    //inserts answer to table
     public static Boolean InsertToTable(Connection connection, String answer) {
         PreparedStatement pst;
         try {
@@ -67,7 +52,7 @@ public class AnswerText implements Serializable {
             return false;
         }
     }
-
+    //returns answer by the index of the row
     public static String getAnswerTextByIndex(int ansIndex, String subjectName, Connection connection) {
         try (PreparedStatement pst = connection.prepareStatement("SELECT answerText FROM AnswersPool WHERE subjectName = ? LIMIT ? OFFSET ?")) {
             pst.setString(1, subjectName);
@@ -86,25 +71,8 @@ public class AnswerText implements Serializable {
         return null;
     }
 
-
-    public int hashCode() {
-        return Objects.hash(answerText);
-    }
-
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null || getClass() != obj.getClass())
-            return false;
-        AnswerText other = (AnswerText) obj;
-        return Objects.equals(answerText, other.answerText);
-    }
-
-    public String toString() {
-        return answerText;
-    }
-
-    public static String getAnswerTextTable(Connection connection) throws SQLException {
+    //return all the info of the answers tables
+    public static String getAnswerTextTable(Connection connection)  {
         StringBuilder result = new StringBuilder("AnswerText Table:\n");
         String query = "SELECT * FROM AnswerText";
         try (PreparedStatement pst = connection.prepareStatement(query);

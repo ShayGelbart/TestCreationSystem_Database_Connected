@@ -7,10 +7,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Scanner;
 
 public class AutomaticExam implements Examable {
 
-    public static boolean createExam(String subjectName, int numOfQuestions, Connection connection) throws SQLException, IOException {
+    public static boolean createExam(String subjectName, int numOfQuestions, Connection connection , Scanner sc) throws SQLException, IOException {
         int qRandIndex, answerCount = 0, aRandIndex, qArrayIndex = 1, testId, questionId, indexWhile = 4, reassignedCheck;
         boolean correctAnswerFlag = false, isAnswerTrue = false, isAmerican = false;
         testId = Test.insertToTable(connection, subjectName);

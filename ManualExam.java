@@ -9,9 +9,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class ManualExam implements Examable {
-    static Scanner sc = new Scanner(System.in);
 
-    public static boolean createExam(String subjectName, int numOfQuestions, Connection connection) {
+    public static boolean createExam(String subjectName, int numOfQuestions, Connection connection, Scanner sc) {
         try {
             int qIndex, testId = Test.insertToTable(connection, subjectName), qId;
             boolean isAmerican = false;

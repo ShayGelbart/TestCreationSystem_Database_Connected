@@ -12,6 +12,7 @@ public class Pool implements Serializable {
      *
      */
     @Serial
+    //returns answers for the specific subject
     public static String getAnswerTextArrayAtIndex(Connection connection, String subName, int index) {
         PreparedStatement pst;
         try {
@@ -28,7 +29,7 @@ public class Pool implements Serializable {
         }
         return null;
     }
-
+    //returns the id if the question by index of the row and subject name
     public static int getQuestionArrayAtIndex(int qIndex, Connection connection, String subName) throws SQLException {
         PreparedStatement pst = null;
         ResultSet rs = null;
@@ -50,20 +51,7 @@ public class Pool implements Serializable {
         return 0;
 
     }
-
-    //
-//    public String getSubName() {
-//        return subName;
-//    }
-//
-//    public void setSubName(String subName) {
-//        this.subName = subName;
-//    }
-//
-//    public int hashCode() {
-//        return Objects.hash(subName);
-//    }
-
+    //returns amount of questions in the subject pool
     public static int getAmountOfQuestionsInSubjectPool(Connection connection, String subName) throws SQLException {
         try (PreparedStatement pst = connection.prepareStatement("SELECT COUNT(*) FROM Question WHERE subjectName LIKE ?")) {
             pst.setString(1, subName);
@@ -77,7 +65,7 @@ public class Pool implements Serializable {
             return -1;
         }
     }
-
+    //returns amount of answers in the subject pool
     public static int getAmountOfAnswersInSubjectPool(Connection connection, String subName) throws SQLException {
         try (PreparedStatement pst = connection.prepareStatement("SELECT COUNT(*) FROM AnswersPool WHERE subjectName LIKE ?")) {
             pst.setString(1, subName);
@@ -92,7 +80,7 @@ public class Pool implements Serializable {
             return -1;
         }
     }
-
+    //checks if answer in the subject pool
     public static boolean isAnswerInSubjectPool(Connection connection, String answerText, String subjectName) throws SQLException {
         PreparedStatement pst = null;
         ResultSet rs = null;
@@ -117,7 +105,7 @@ public class Pool implements Serializable {
     }
 
 
-    // add answer to answer pool
+    // add answer to answers pool
     public static int addAnswerTextToPool(String answerStr, String subjectName, Connection connection) throws SQLException {
         if (isAnswerInSubjectPool(connection, answerStr, subjectName)) {
             return 0;
@@ -132,27 +120,7 @@ public class Pool implements Serializable {
         }
     }
 
-
-    public static int countAmericanQuestionsWithMoreThanFourAnswers(Connection connection, String subName) throws SQLException {
-        PreparedStatement pst;
-        ResultSet rs;
-        try {
-            pst = connection.prepareStatement("SELECT COUNT(*) FROM QuestionsPool QP" +
-                    "JOIN QuestionAnswer QA ON QP.questionId = QA.questionId" +
-                    "WHERE QP.subjectName LIKE ?" +
-                    "GROUP BY QP.questionId" +
-                    "HAVING COUNT(QA.answerText) >= 4");
-            pst.setString(1, subName);
-            rs = pst.executeQuery();
-            return rs.next() ? rs.getInt(1) : 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return -1;
-    }
-
-
-    // delete question to answer pool
+    // delete question from answers pool
     public static boolean deleteQuestionFromArray(int index, String subjectName, Connection connection) throws SQLException {
         PreparedStatement pst = null;
         try {
@@ -213,62 +181,7 @@ public class Pool implements Serializable {
             if (pst != null) pst.close();
         }
     }
-
-
-//        if (index <= answerTextArray.size() && index > 0) {
-//            questionArray.remove(index - 1);
-//            return true;
-//        } else
-//            return false;
-
-//    public void deleteAllAnswersFromAllQuestions() {
-//        for (Question question : questionArray)
-//            question.deleteAllAnswers();
-//    }
-
-    // add question to pool
-    public static boolean addQuestionToPool(Connection connection, int questionId, String subject) throws SQLException {
-        try (PreparedStatement pst = connection.prepareStatement("INSERT INTO QuestionsPool VALUES (?, ?)")) {
-            pst.setInt(1, questionId);
-            pst.setString(2, subject);
-            boolean result = pst.executeUpdate() > 0;
-            pst.close();
-            return result;
-        } catch (SQLException e) {
-            return false;
-        }
-
-
-        //        for (Question question : questionArray)
-//            if (q.getQuestionText().equals(question.getQuestionText()))
-//                return false;
-//        questionArray.add(q);
-//        return true;
-    }
-
-    // add answer to question based on its index from the pool
-//        public boolean addAnswerToAmericanQuestionByIndex ( int indexQuestion, int indexAnswer, boolean answerIsTrue){
-//            if (questionArray.get(indexQuestion - 1).getAnswerCount() >= 10)
-//                return false;
-//            questionArray.get(indexQuestion - 1).addAnswerToQuestion(answerTextArray.get(indexAnswer - 1), answerIsTrue);
-//            return true;
-//        }
-
-    // delete answer from question based on its index from the pool
-//        public boolean deleteAnswerFromQuestionByIndex ( int indexQuestion, int indexAnswer) {
-//            if (questionArray.get(indexQuestion - 1).getAnswerCount() == 0)
-//                return false;
-//            questionArray.get(indexQuestion - 1).deleteAnswerFromQuestion(indexAnswer);
-//            return true;
-//        }
-//    @Override
-//    public boolean equals(Object obj) {
-//        if (this == obj) return true;
-//        if (obj == null || getClass() != obj.getClass()) return false;
-//        Pool other = (Pool) obj;
-//        return Objects.equals(subName);
-//    }
-
+    //checks what type of question
     public static boolean isQuestionType(Connection connection, int questionId, String tableName) throws SQLException {
         PreparedStatement pst = null;
         ResultSet rs = null;
@@ -353,39 +266,13 @@ public class Pool implements Serializable {
             return "There are no questions in the pool\n";
         return str;
     }
-//    public String questionPoolToString() {
-//        int i = 0;
-//        String str = "Here is the question pool:\n\n";
-//        for (Question q : this.questionArray) {
-//            if (q instanceof OpenQuestion)
-//                str += (i + 1) + ")" + q.toString() + "\n";
-//            else // American question
-//                str += (i + 1) + ")" + q.questionWithAnswersToString() + "\n";
-//            i++;
-//        }
-//        return str;
-//    }
-
 
     public static String questionsSeperatedFromAnswers(Connection connection, String subjectName) throws
             SQLException {
         return questionPoolToString(subjectName, connection) + "\n" + answerTextPoolToString(connection, subjectName);
     }
 
-    // prints the questions with their answers
-//    public String toString() {
-//        int i = 0;
-//        String str = "Here is the questions with their answers:" + "\n";
-//        for (Question q : this.questionArray) {
-//            if (q instanceof AmericanQuestion)
-//                str += (i + 1) + ")" + q.questionWithAnswersToString() + "\n";
-//            else
-//                str += (i + 1) + ")" + q.toString() + "\n";
-//            i++;
-//        }
-//        return str;
-//    }
-    public static String getPoolTable(Connection connection) throws SQLException {
+    public static String getPoolTable(Connection connection)  {
         StringBuilder result = new StringBuilder("Pool Table:\n");
         String query = "SELECT * FROM Pool";
         try (PreparedStatement pst = connection.prepareStatement(query);
