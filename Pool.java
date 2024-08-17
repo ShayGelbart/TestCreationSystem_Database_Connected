@@ -296,8 +296,8 @@ public class Pool implements Serializable {
                     str += (i + 1) + ")";
                     // Check if it's an OpenQuestion or AmericanQuestion
                     if (isQuestionType(connection, questionId, "OpenQuestion")) {
-                        str += "Open Question: " + questionText + "\n";
-                        str += OpenQuestion.getOpenQuestionSolution(questionId, connection);
+                        str += "Open Question: " + questionText + "\nSolution: ";
+                        str += OpenQuestion.getOpenQuestionSolution(questionId, connection) + "\n";
                     } else {
                         str += "American Question: " + questionText + "\n";
                         str += AmericanQuestion.getAmericanQuestionAnswers(connection, questionId);

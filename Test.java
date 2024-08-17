@@ -227,7 +227,7 @@ public class Test {
             if (isAmericanQuestion(testId, questionId, connection)) {
                 str += rs.getString("questionText") + "\n" + creatingSolutionQuestionsArray(connection, questionId);
             } else {
-                str += OpenQuestion.getOpenQuestionTextAndDiff(questionId, connection) + OpenQuestion.getOpenQuestionSolution(questionId, connection);
+                str += OpenQuestion.getOpenQuestionTextAndDiff(questionId, connection) + "Solution: " + OpenQuestion.getOpenQuestionSolution(questionId, connection) + "\n";
             }
         }
         rs.close();
@@ -275,7 +275,7 @@ public class Test {
         PreparedStatement pst = null;
         ResultSet rs = null;
         try {
-            pst = connection.prepareStatement("SELECT * FROM TestQuestions WHERE testId = ?");
+            pst = connection.prepareStatement("SELECT * FROM TestQuestions t JOIN Question q ON t.questionId = q.questionId WHERE testId = ?");
             pst.setInt(1, testId);
             rs = pst.executeQuery();
         } catch (SQLException e) {
@@ -285,7 +285,7 @@ public class Test {
         int questionId;
         while (rs.next()) {
             questionId = rs.getInt("questionId");
-            str = rs.getString("difficulty") + ": " + rs.getString("answerText") + "\n";
+            str = rs.getString("difficulty") + ": " + rs.getString("questionText") + "\n";
             if (isAmericanQuestion(testId, questionId, connection)) {
                 str = "(American question), " + str + AmericanQuestion.getAmericanQuestionAnswers(connection, questionId);
                 str += "Answer-Not a single answer is correct\n";
@@ -296,7 +296,7 @@ public class Test {
             i++;
         }
         rs.close();
-        pst.close();
+        if(pst != null) pst.close();
         return str;
     }
 

@@ -62,7 +62,7 @@ public class OpenQuestion extends Question {
             pst.setInt(1, questionId);
             rs = pst.executeQuery();
             if (rs.next()) {
-                return "Solution: " + rs.getString("schoolSolution") + "\n";
+                return rs.getString("schoolSolution");
             }
         } finally {
             if (rs != null) rs.close();
