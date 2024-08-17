@@ -6,6 +6,8 @@ import java.sql.SQLException;
 
 public interface Examable {
 
-    boolean createExam(String subjectName, int numOfQuestions, Connection connection) throws SQLException, IOException;
+    static boolean createExam(String subjectName, int numOfQuestions, Connection connection) throws SQLException, IOException {
+        return false;
+    }
 
 }

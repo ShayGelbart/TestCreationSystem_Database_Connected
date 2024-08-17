@@ -7,23 +7,16 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 
 public class AutomaticExam implements Examable {
 
-    @Override
-    public boolean createExam(String subjectName, int numOfQuestions, Connection connection) throws SQLException, IOException {
-        int qRandIndex, correctAnswerCounter = 0, answerCount, aRandIndex, qArrayIndex = 1, testId, questionId, indexWhile = 4;
-        //Actions b = new Actions(a);
-        //Actions c = new Actions(a.getSubName());
-        //Test t = new Test(new ArrayList<Question>() , c, c.getSubName()); // empty test
+    public static boolean createExam(String subjectName, int numOfQuestions, Connection connection) throws SQLException, IOException {
+        int qRandIndex, answerCount = 0, aRandIndex, qArrayIndex = 1, testId, questionId, indexWhile = 4, reassignedCheck;
+        boolean correctAnswerFlag = false, isAnswerTrue = false, isAmerican = false;
         testId = Test.insertToTable(connection, subjectName);
         if (testId == 0) // exception
             return false;
-        int reassignedCheck;
-//         = Pool.countAmericanQuestionsWithMoreThanFourAnswers(connection, subjectName);
-//        if (reassignedCheck < numOfQuestions)
-//            return false;
+
 
         while (numOfQuestions > 0) { // getting as much questions as input
             reassignedCheck = Pool.getAmountOfQuestionsInSubjectPool(connection, subjectName);
@@ -32,48 +25,56 @@ public class AutomaticExam implements Examable {
 
             qRandIndex = (int) (Math.random() * reassignedCheck) + 1;// random index for question
             questionId = Pool.getQuestionArrayAtIndex(qRandIndex, connection, subjectName);
-            if (Pool.isQuestionType(connection, questionId, "AmericanQuestion")) {
-                //AmericanQuestion q = new AmericanQuestion((AmericanQuestion) b.getQuestionArrayAtIndex(qRandIndex));
-                //AmericanQuestion qToTest = new AmericanQuestion(q.getQuestionText(), q.getDiff());
 
+            if (Pool.isQuestionType(connection, questionId, "AmericanQuestion")) {
+                isAmerican = true;
                 try {
-                    if (AmericanQuestion.getAnswerCount(connection, questionId) <= 3)
+                    answerCount = AmericanQuestion.getAnswerCount(connection, questionId);
+                    if (answerCount == -1) // exception
+                        return false;
+                    if (answerCount <= 3)
                         throw new LessThanThreeAnswersException();
                 } catch (LessThanThreeAnswersException e) {
                     System.out.println(e.getMessage());
                 }
 
-                answerCount = AmericanQuestion.getAnswerCount(connection, questionId);
-                if (answerCount == -1) // exception
+                int answerCountInPool = Pool.getAmountOfAnswersInSubjectPool(connection, subjectName);
+                if (answerCountInPool <= 0)
                     return false;
 
-                if (answerCount >= 4 && AmericanQuestion.getNumOfIncorrectAnswers(connection, questionId) >= 3) {
-                    while (indexWhile > 0) { // getting answers
-                        answerCount = AmericanQuestion.getAnswerCount(connection, questionId);
-                        aRandIndex = (int) (Math.random() * answerCount + 1);
-                        if (AmericanQuestion.isAnswerTrue(connection, questionId, AmericanQuestion.getAnswerByIndex(connection, questionId, aRandIndex))) {
-                            if (correctAnswerCounter == 0) {
-                                correctAnswerCounter++;
-                                reassignedCheck = AmericanQuestion.addAnswerToQuestion(AmericanQuestion.getAnswerByIndex(connection, questionId, aRandIndex), questionId, true, connection);
-                                if (reassignedCheck == -1)
-                                    return false;
-                                if (reassignedCheck == 1)
-                                    indexWhile--;
-                            }
-                        } else
-                            AmericanQuestion.addAnswerToQuestion(AmericanQuestion.getAnswerByIndex(connection, questionId, aRandIndex), questionId, false, connection);
-                        //q.deleteAnswerFromQuestion(aRandIndex);
-                    }
-                    //c.addQuestionToPool(qToTest);
-                    //b.deleteQuestionFromArray(qRandIndex);
-                    reassignedCheck = Test.addQuestionToTestArray(testId, questionId, connection);
+                while (indexWhile > 0) { // getting answers
+                    aRandIndex = (int) (Math.random() * answerCountInPool + 1);
+                    String answerText = AmericanQuestion.getAnswerByIndex(connection, questionId, aRandIndex);
+                    if (answerText == null)
+                        return false;
+
+                    if (AmericanQuestion.isAnswerTrue(connection, questionId, answerText)) {
+                        if (!correctAnswerFlag) { // only one answer can be true
+                            correctAnswerFlag = true;
+                            isAnswerTrue = true;
+                        }
+                    } else
+                        isAnswerTrue = false;
+
+                    reassignedCheck = Test.addAnswerToQuestion(answerText, questionId, isAnswerTrue, connection);
                     if (reassignedCheck == -1)
                         return false;
                     if (reassignedCheck == 1)
-                        numOfQuestions--;
-                    //qArrayIndex++;
+                        indexWhile--;
                 }
+            } else { // open question
+                isAmerican = false;
+                String answerToOpenQuestion = OpenQuestion.getOpenQuestionSolution(questionId, connection);
+                reassignedCheck = Test.addAnswerToQuestion(answerToOpenQuestion, questionId, isAnswerTrue, connection);
+                    if (reassignedCheck == -1)
+                        return false;
             }
+
+            reassignedCheck = Test.addQuestionToTestArray(testId, questionId, isAmerican,  connection);
+                if (reassignedCheck == -1)
+                    return false;
+                if (reassignedCheck == 1)
+                    numOfQuestions--;
         }
         // writing to files
         LocalDateTime now = LocalDateTime.now();

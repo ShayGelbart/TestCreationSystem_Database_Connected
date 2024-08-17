@@ -130,30 +130,27 @@ public class AmericanQuestion extends Question {
     }
 
 
-    public static int getNumOfIncorrectAnswers(Connection connection, int questionId) throws SQLException {
-        int incorrectAnswersCount = 0;
+    public static boolean atLeastOneTrueAnswer(Connection connection, int questionId) throws SQLException {
         PreparedStatement pst = null;
         ResultSet rs = null;
-
         try {
             pst = connection.prepareStatement(
-                    "SELECT COUNT(*) AS incorrectCount FROM QuestionAnswer QA " +
+                    "SELECT 1 FROM QuestionAnswer QA " +
                             "JOIN Answer A ON QA.answerText = A.answerText " +
-                            "WHERE QA.questionId = ? AND A.trueness = FALSE");
+                            "WHERE QA.questionId = ? AND A.trueness = ?");
             pst.setInt(1, questionId);  // Set the questionId parameter
+            pst.setBoolean(2, true);
             rs = pst.executeQuery();
 
-            // Get the count of incorrect answers
-            if (rs.next()) {
-                incorrectAnswersCount = rs.getInt("incorrectCount");
-            }
-
+            return rs.next();
+        } catch (SQLException e) {
+            e.printStackTrace();
         } finally {
             if (rs != null) rs.close();
             if (pst != null) pst.close();
         }
 
-        return incorrectAnswersCount;
+        return false;
     }
 
 
@@ -197,17 +194,22 @@ public class AmericanQuestion extends Question {
 
     // add answer to question
     public static int addAnswerToQuestion(String answerText, int qId, boolean trueness, Connection connection) {
-        try (PreparedStatement pst = connection.prepareStatement("INSERT INTO QuestionAnswer VALUES (?, ?, ?)")) {
-            pst.setInt(1, qId);
-            pst.setString(2, answerText);
-            pst.setBoolean(3, trueness);
-            int result = pst.executeUpdate();
-            pst.close();
-            return result;
-        } catch (SQLException e) {
-            return -1;
-        }
+    String sql = "INSERT INTO QuestionAnswer (questionId, answerText, trueness) VALUES (?, ?, ?)";
+
+    try (PreparedStatement pst = connection.prepareStatement(sql)) {
+        pst.setInt(1, qId);
+        pst.setString(2, answerText);
+        pst.setBoolean(3, trueness);
+
+        int result = pst.executeUpdate();
+        pst.close();
+        return result;
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return -1;
     }
+}
+
 
 //		if (answersForQuestions.size() == 10)
 //			return false;

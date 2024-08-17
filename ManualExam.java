@@ -11,17 +11,15 @@ import java.util.Scanner;
 public class ManualExam implements Examable {
     static Scanner sc = new Scanner(System.in);
 
-    @Override
-    public boolean createExam(String subjectName, int numOfQuestions, Connection connection) {
+    public static boolean createExam(String subjectName, int numOfQuestions, Connection connection) {
         try {
             int qIndex, testId = Test.insertToTable(connection, subjectName), qId;
-            //Actions b = new Actions(a);
-            //Test t = new Test(subjectName);
+            boolean isAmerican = false;
             if (testId == 0) {
                 System.out.println("An error occurred, please try again");
                 return false;
             }
-            System.out.println(Pool.questionPoolToString( subjectName,connection));
+            System.out.println(Pool.questionPoolToString(subjectName, connection));
             int numOfQuestionsInPool;
             while (numOfQuestions > 0) {
                 do {
@@ -33,11 +31,15 @@ public class ManualExam implements Examable {
                 } while ((qIndex <= 0 || qIndex > numOfQuestionsInPool));
 
                 qId = Pool.getQuestionArrayAtIndex(qIndex, connection, subjectName);
-                if (Pool.isQuestionType(connection, qId, "AmericanQuestion") && AmericanQuestion.getAnswerCount(connection, qId) <= 3) {
-                    throw new LessThanThreeAnswersException();
-                }
+                if (Pool.isQuestionType(connection, qId, "AmericanQuestion")) {
+                    isAmerican = true;
+                    if (AmericanQuestion.getAnswerCount(connection, qId) <= 3) {
+                        throw new LessThanThreeAnswersException();
+                    }
+                } else
+                    isAmerican = false;
 
-                int resAddToTest = Test.addQuestionToTestArray(testId, qId, connection);
+                int resAddToTest = Test.addQuestionToTestArray(testId, qId, isAmerican, connection);
                 if (resAddToTest == 1) {
                     System.out.println("Successfully added the question to the test");
                     numOfQuestions--;

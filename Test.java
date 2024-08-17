@@ -25,7 +25,7 @@ public class Test {
             pst = connection.prepareStatement("INSERT INTO Test (subjectName) VALUES (?) RETURNING testId");
             pst.setString(1, subjectName);
             ResultSet rs = pst.executeQuery();
-             int res = 0;
+            int res = 0;
             if (rs.next()) {
                 res = rs.getInt(1);
             }
@@ -84,12 +84,13 @@ public class Test {
 
 
     // add question to the test
-    public static int addQuestionToTestArray(int testId, int qId, Connection connection) {
+    public static int addQuestionToTestArray(int testId, int qId, boolean isAmerican, Connection connection) {
         PreparedStatement pst = null;
         try {
-            pst = connection.prepareStatement("INSERT INTO TestQuestions VALUES (?, ?)");
+            pst = connection.prepareStatement("INSERT INTO TestQuestions VALUES (?, ?, ?)");
             pst.setInt(1, testId);
             pst.setInt(2, qId);
+            pst.setBoolean(3, isAmerican);
             int res = pst.executeUpdate();
             pst.close();
             return res;
@@ -98,6 +99,41 @@ public class Test {
         }
         return -1;
     }
+
+    public static int addAnswerToQuestion(String answerText, int qId, boolean trueness, Connection connection) {
+        String sql = "INSERT INTO TestQuestionAnswer (questionId, answerText, trueness) VALUES (?, ?, ?)";
+
+        try (PreparedStatement pst = connection.prepareStatement(sql)) {
+            pst.setInt(1, qId);
+            pst.setString(2, answerText);
+            pst.setBoolean(3, trueness);
+
+            int result = pst.executeUpdate();
+            pst.close();
+            return result;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    public static boolean isAmericanQuestion(int testId, int questionId, Connection connection) {
+        String sql = "SELECT isAmerican FROM TestQuestions WHERE testId = ? AND questionId = ?";
+
+        try (PreparedStatement pst = connection.prepareStatement(sql)) {
+            pst.setInt(1, testId);
+            pst.setInt(2, questionId);
+
+            ResultSet rs = pst.executeQuery();
+
+            if (rs.next())
+                return rs.getBoolean("isAmerican");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 
     // delete question from the test
     public boolean deleteQuestionFromTestArray(int index) {
@@ -158,7 +194,6 @@ public class Test {
     }
 
 
-
     // print only the question in the test without their answers
     public String testQuestionsToString() {
         int i = 0;
@@ -189,7 +224,7 @@ public class Test {
         while (rs.next()) {
             questionId = rs.getInt("questionId");
             str = (i + 1) + ")";
-            if (Pool.isQuestionType(connection, questionId, "AmericanQuestion")) {
+            if (isAmericanQuestion(testId, questionId, connection)) {
                 str += rs.getString("questionText") + "\n" + creatingSolutionQuestionsArray(connection, questionId);
             } else {
                 str += OpenQuestion.getOpenQuestionTextAndDiff(questionId, connection) + OpenQuestion.getOpenQuestionSolution(questionId, connection);
@@ -211,7 +246,7 @@ public class Test {
             pst = connection.prepareStatement("SELECT * FROM TestQuestions t JOIN Question q ON t.questionId = q.questionId WHERE testId = ?");
             pst.setInt(1, testId);
             rs = pst.executeQuery();
-            
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -220,7 +255,7 @@ public class Test {
         while (rs.next()) {
             questionId = rs.getInt("questionId");
             str = rs.getString("difficulty") + ": " + rs.getString("questionText") + "\n";
-            if (Pool.isQuestionType(connection, questionId, "AmericanQuestion")) {
+            if (isAmericanQuestion(testId, questionId, connection)) {
                 str = "(American question), " + str + AmericanQuestion.getAmericanQuestionAnswers(connection, questionId);
                 str += "Answer-Not a single answer is correct\n";
                 str += "Answer-More than one answer is correct\n\n";
@@ -237,13 +272,12 @@ public class Test {
     public static String AutoFileAddedAnswersToString(Connection connection, int testId) throws SQLException { // test to file
         int i = 0;
         String str = "";
-        PreparedStatement pst;
+        PreparedStatement pst = null;
         ResultSet rs = null;
         try {
             pst = connection.prepareStatement("SELECT * FROM TestQuestions WHERE testId = ?");
             pst.setInt(1, testId);
             rs = pst.executeQuery();
-            pst.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -252,7 +286,7 @@ public class Test {
         while (rs.next()) {
             questionId = rs.getInt("questionId");
             str = rs.getString("difficulty") + ": " + rs.getString("answerText") + "\n";
-            if (Pool.isQuestionType(connection, questionId, "AmericanQuestion")) {
+            if (isAmericanQuestion(testId, questionId, connection)) {
                 str = "(American question), " + str + AmericanQuestion.getAmericanQuestionAnswers(connection, questionId);
                 str += "Answer-Not a single answer is correct\n";
                 str += "Answer-More than one answer is correct\n\n";
@@ -262,6 +296,7 @@ public class Test {
             i++;
         }
         rs.close();
+        pst.close();
         return str;
     }
 
