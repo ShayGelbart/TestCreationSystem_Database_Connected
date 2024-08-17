@@ -16,11 +16,6 @@ public class Main {
             Class.forName("org.postgresql.Driver"); // line 16
             String dbUrl = "jdbc:postgresql:TestCreation";
             connection = DriverManager.getConnection(dbUrl, "postgres", "shay0307");
-//            Statement stmt = connection.createStatement();
-//            ResultSet rs = stmt.executeQuery("SELECT * FROM Question");
-//            while (rs.next()) {
-//                System.out.println("- " + rs.getString("questionText"));
-//            }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -30,6 +25,7 @@ public class Main {
             System.out.println("Welcome to the main menu");
             System.out.println("Enter your choice\n" + "1.Create a test and pick question and answers\n"
                     + "2.Alter a pool or create a new pool\n" +
+                    "3.Print All Information in our Database\n" +
                     "3.EXIT");
 
             mainChoice = readInRange(0, 2, sc);
@@ -40,6 +36,8 @@ public class Main {
                 case 2:
                     editOrNewMenu(sc, connection);
                     break;
+                case 3:
+                    printAllDataBase(sc, connection);
                 case 0:
                     System.out.println("Goodbye,have a good day:)");
                 default:
@@ -305,12 +303,7 @@ public class Main {
         if (newId <= 0) { // if it was an exception(==0), the user should try again.
             System.out.println("An error occurred, please try again");
         }
-
-//        if (Pool.addQuestionToPool(connection, newId, subject)) {
         System.out.println("Successfully added a new open question to the " + subject + " pool.");
-//        } else {
-//            System.out.println("Failed to add the open question, try again.");
-//        }
     }
 
     // Helper function
@@ -337,12 +330,8 @@ public class Main {
                 System.out.println("Answer was successfully added to the question");
             }
         }
-
-        //if (Pool.addQuestionToPool(connection, newId, subject)) {
         System.out.println("Successfully added a new American question to the " + subject + " pool.");
-        // } else {
-        //   System.out.println("Failed to add the American question, try again.");
-        // }
+
     }
 
     public static int addAnswerToAmericanQuestion(String subjectName, int id, Scanner sc, Connection connection) throws SQLException {
