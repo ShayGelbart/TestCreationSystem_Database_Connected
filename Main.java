@@ -28,7 +28,7 @@ public class Main {
                     "3.Print All Information in our Database\n" +
                     "3.EXIT");
 
-            mainChoice = readInRange(0, 2, sc);
+            mainChoice = readInRange(0, 3, sc);
             switch (mainChoice) {
                 case 1:
                     testCreation(sc, connection);
@@ -193,13 +193,15 @@ public class Main {
             String subjectName = Subjects.getPoolsAtIndex(poolIndex, connection);
 
             System.out.println("Welcome to the mini menu where you can alter the pool");
-            System.out.println("1.See the entire pool(questions and then answers) ");
-            System.out.println("2.Add an answer to the pool");
-            System.out.println("3.Add a question to the pool");
-            System.out.println("4.Delete a question from the pool");
-            System.out.println("0.BACK TO MAIN MENU");
-            System.out.println("Enter your choice");
-            choice = readInRange(0, 4, sc);
+            System.out.println("1.See the entire pool(questions and then answers)\n" +
+                    "2.Add an answer to the pool\n" +
+                    "3.Add a question to the pool\n" +
+                    "4.Delete a question from the pool\n" +
+                    "5.Delete an answer from the pool\n"+
+                    "0.BACK TO MAIN MENU\n" +
+                    "Enter your choice\n");
+
+            choice = readInRange(0, 5, sc);
             switch (choice) { // alter the pool
                 case 1: // seeing the entire pool, question and then answers
                     System.out.println(Pool.questionsSeperatedFromAnswers(connection, subjectName));
@@ -213,6 +215,8 @@ public class Main {
                 case 4: // delete question from the pool
                     printPlusDeleteQuestionFromArray(subjectName, connection, sc);
                     break;
+                case 5:
+                    deleteAnswerFromPool();
                 case 0: // exit back to main menu
                     System.out.println("You've decided to exit this menu");
                     break;
