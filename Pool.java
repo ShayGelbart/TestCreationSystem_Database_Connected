@@ -261,7 +261,6 @@ public class Pool implements Serializable {
             if (rs != null) rs.close();
             if (pst != null) pst.close();
         }
-
         if (i == 0)
             return "There are no questions in the pool\n";
         return str;

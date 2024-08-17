@@ -12,75 +12,36 @@ public abstract class Question implements Serializable {
     /**
      *
      */
-    private static final long serialVersionUID = 1L;
+//    //returns id of the question by the text
+//    public static int getQuestionIdByQuestionText(Connection connection, String questionText) throws SQLException {
+//        PreparedStatement pst = null;
+//        ResultSet rs = null;
+//        try {
+//            // Prepare the SQL statement to retrieve the questionId based on questionText
+//            pst = connection.prepareStatement("SELECT questionId FROM Question WHERE questionText = ?");
+//            pst.setString(1, questionText);
+//
+//            // Execute the query
+//            rs = pst.executeQuery();
+//
+//            // If the questionText is found, return the questionId
+//            if (rs.next()) {
+//                return rs.getInt("questionId");
+//            } else {
+//                // Return -1 if the questionText does not exist
+//                return -1;
+//            }
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//            return -1;
+//        } finally {
+//            // Clean up resources
+//            if (rs != null) rs.close();
+//            if (pst != null) pst.close();
+//        }
+//    }
 
-    public enum Difficulty {Easy, Medium, Hard}
-
-    ;
-
-    protected Difficulty diff;
-    protected String questionText;
-    protected static int idCounter = 1;
-    protected int id;
-
-    public Question(String questionText) {
-        this.questionText = questionText;
-        this.id = idCounter++;
-    }
-
-    public String getQuestionText() {
-        return questionText;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int newId) {
-        this.id = newId;
-    }
-
-    public void setStaticId(int newId) {
-        Question.idCounter = newId;
-    }
-
-    public Difficulty getDiff() {
-        return diff;
-    }
-
-    public void setDiff(Difficulty diff) {
-        this.diff = diff;
-    }
-
-    public static int getQuestionIdByQuestionText(Connection connection, String questionText) throws SQLException {
-        PreparedStatement pst = null;
-        ResultSet rs = null;
-        try {
-            // Prepare the SQL statement to retrieve the questionId based on questionText
-            pst = connection.prepareStatement("SELECT questionId FROM Question WHERE questionText = ?");
-            pst.setString(1, questionText);
-
-            // Execute the query
-            rs = pst.executeQuery();
-
-            // If the questionText is found, return the questionId
-            if (rs.next()) {
-                return rs.getInt("questionId");
-            } else {
-                // Return -1 if the questionText does not exist
-                return -1;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return -1;
-        } finally {
-            // Clean up resources
-            if (rs != null) rs.close();
-            if (pst != null) pst.close();
-        }
-    }
-
-
+    //checks if there's a question with the same text in the subject
     public static boolean isQuestionTextInTable(Connection connection, String questionText, String subjectName) throws SQLException {
         PreparedStatement pst = null;
         ResultSet rs = null;
@@ -104,6 +65,7 @@ public abstract class Question implements Serializable {
         }
     }
 
+    //inserts a question into the database
     public static int insertIntoTable(Connection connection, String questionText, String subjectName, String diff) throws SQLException {
         try (PreparedStatement pst = connection.prepareStatement("INSERT INTO Question (questionText, SubjectName, difficulty) VALUES (?, ?, CAST(? AS difficulty)) RETURNING questionId")) {
             pst.setString(1, questionText);
@@ -119,6 +81,7 @@ public abstract class Question implements Serializable {
         return -1;
     }
 
+    //returns string of all the difficulties
     public static String[] printDifficulty(Connection connection) {
         String str = "Enter the difficulty:\n";
         try (PreparedStatement pst = connection.prepareStatement("SELECT unnest(enum_range(NULL::difficulty))")) {
@@ -141,27 +104,7 @@ public abstract class Question implements Serializable {
         return null;
     }
 
-    protected String testToString() {
-        return questionText;
-
-    }
-
-    public int hashCode() {
-        return Objects.hash(diff, questionText, id);
-    }
-
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        Question other = (Question) obj;
-        return Objects.equals(questionText, other.questionText);
-    }
-
-    public String toString() {
-        return "Id-" + id + "\nQuestion text-" + questionText;
-    }
-
-    public static String getQuestionTable(Connection connection) throws SQLException {
+    public static String getQuestionTable(Connection connection) {
         StringBuilder result = new StringBuilder("Question Table:\n");
         String query = "SELECT * FROM Question";
         try (PreparedStatement pst = connection.prepareStatement(query);

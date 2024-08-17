@@ -59,7 +59,7 @@ public class ManualExam implements Examable {
             File exam = new File(fileNameExam);
             exam.createNewFile();
             PrintWriter pw = new PrintWriter(exam);
-            pw.print(Test.manualFileAddedAnswersToString(connection, testId));
+            pw.print(Test.examToFile(connection, testId));
             pw.close();
 
             File solution = new File(fileNameSolution);

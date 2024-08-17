@@ -13,17 +13,7 @@ public class Subjects implements Serializable {
      *
      */
     @Serial
-    private static final long serialVersionUID = 1L;
-    private ArrayList<Pool> pools;
-
-    public Subjects() {
-        this.pools = new ArrayList<>();
-    }
-
-    public ArrayList<Pool> getPools() {
-        return pools;
-    }
-
+    //returns subject at index
     public static String getPoolsAtIndex(int index, Connection connection) {
         String subjectName = null;
         PreparedStatement pst = null;
@@ -43,10 +33,7 @@ public class Subjects implements Serializable {
         return subjectName;
     }
 
-    public void setPools(ArrayList<Pool> pools) {
-        this.pools = pools;
-    }
-
+    //returns amount of subjects
     public static int getAmountOfPools(Connection connection) throws SQLException {
         try (PreparedStatement pst = connection.prepareStatement("SELECT COUNT(*) FROM Pool")) {
             ResultSet rs = pst.executeQuery();
@@ -61,6 +48,7 @@ public class Subjects implements Serializable {
         }
     }
 
+    //checks if subject is in the database
     public static boolean isSubjectInTable(Connection connection, String subjectName) throws SQLException {
         PreparedStatement pst = null;
         ResultSet rs = null;
@@ -87,10 +75,9 @@ public class Subjects implements Serializable {
 
     // adds a test to the data base
     public static boolean insertToTable(String subject, Connection connection) throws SQLException {
-        if(isSubjectInTable(connection, subject)) {
+        if (isSubjectInTable(connection, subject)) {
             return false;
         }
-
         PreparedStatement pst = null;
         boolean check;
         try {
@@ -134,25 +121,6 @@ public class Subjects implements Serializable {
         return false; // Return false if no row was deleted
     }
 
-
-    // prints an entire test based on index
-    public String toStringSubjectByIndex(int index) {
-        return pools.get(index - 1).toString();
-    }
-
-    @SuppressWarnings("unchecked")
-    public void readFromBinaryFile() throws FileNotFoundException, IOException, ClassNotFoundException {
-        ObjectInputStream inFile = new ObjectInputStream(new FileInputStream("Subjects.dat"));
-        pools = (ArrayList<Pool>) inFile.readObject();
-        inFile.close();
-    }
-
-    public void writeToBinaryFile() throws FileNotFoundException, IOException {
-        ObjectOutputStream outFile = new ObjectOutputStream(new FileOutputStream("Subjects.dat"));
-        outFile.writeObject(pools);
-        outFile.close();
-    }
-
     // prints the names of every subject which has a test
     public static String toStringSubjectNames(Connection connection) throws SQLException {
         String str = "Names of every subject: \n";
@@ -174,16 +142,4 @@ public class Subjects implements Serializable {
         return str;
     }
 
-    public int hashCode() {
-        return Objects.hash(pools);
-    }
-
-    // prints the entire data base's tests
-    public String toString() {
-        String str = "The entire data base:\n";
-        for (Pool pool : this.pools) {
-            str += pool.toString() + "\n";
-        }
-        return str;
-    }
 }

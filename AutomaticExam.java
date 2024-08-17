@@ -91,7 +91,7 @@ public class AutomaticExam implements Examable {
         File exam = new File(fileNameExam);
         exam.createNewFile();
         PrintWriter pw = new PrintWriter(exam);
-        pw.print(Test.AutoFileAddedAnswersToString(connection, testId));
+        pw.print(Test.examToFile(connection, testId));
         pw.close();
 
         //t.creatingSolutionQuestionsArray();
