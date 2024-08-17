@@ -446,7 +446,7 @@ public class Main {
         return options[choice];
     }
 
-    private static void printAllDataBase(Connection connection) {
+    private static void printAllDataBase(Connection connection) throws SQLException {
         System.out.println(AnswerText.getAnswerTextTable(connection));
         System.out.println(Question.getQuestionTable(connection));
         System.out.println(Pool.getPoolTable(connection));
