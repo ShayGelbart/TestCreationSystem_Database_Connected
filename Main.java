@@ -37,7 +37,7 @@ public class Main {
                     editOrNewMenu(sc, connection);
                     break;
                 case 3:
-                    printAllDataBase(sc, connection);
+                    printAllDataBase(connection);
                 case 0:
                     System.out.println("Goodbye,have a good day:)");
                 default:
@@ -91,9 +91,9 @@ public class Main {
             if (Pool.getAmountOfAnswersInSubjectPool(connection, subjectName) < 4) {
                 System.out.println("There is no enough answers in the subject.Try adding new answers");
             } else
-                check = AutomaticExam.createExam(subjectName, numOfQuestions, connection);
+                check = AutomaticExam.createExam(subjectName, numOfQuestions, connection, sc);
         } else {
-            check = ManualExam.createExam(subjectName, numOfQuestions, connection);
+            check = ManualExam.createExam(subjectName, numOfQuestions, connection, sc);
         }
         if (check)
             System.out.println("Successfully created a test");
@@ -216,7 +216,7 @@ public class Main {
                     printPlusDeleteQuestionFromArray(subjectName, connection, sc);
                     break;
                 case 5:
-                    deleteAnswerFromPool();
+                    deleteAnswerFromPool(subjectName, sc, connection);
                 case 0: // exit back to main menu
                     System.out.println("You've decided to exit this menu");
                     break;
@@ -423,11 +423,34 @@ public class Main {
             System.out.println("Failed to delete question from array, try with a different index");
     }
 
+    private static void deleteAnswerFromPool(String subjectName, Scanner sc, Connection connection) throws SQLException {
+        System.out.println(Pool.answerTextPoolToString(connection, subjectName));
+        int amountOfQuestion = Pool.getAmountOfAnswersInSubjectPool(connection, subjectName);
+        if (amountOfQuestion <= 0) {
+            System.out.println("Try adding a question\n");
+            return;
+        }
+        System.out.println("Enter the index of the question you want to delete");
+        int index = readInRange(1, amountOfQuestion, sc);
+
+        if (Pool.deleteAnswerByIndexFromPool(connection, subjectName, index))
+            System.out.println("Successfully deleted question number-" + index);
+        else
+            System.out.println("Failed to delete question from array, try with a different index");
+    }
+
     public static String defineDifficulty(Scanner sc, Connection connection) throws SQLException {
         String options[] = Question.printDifficulty(connection);
         System.out.println(options[options.length - 1]);
         int choice = readInRange(0, options.length - 1, sc);
         return options[choice];
+    }
+
+    private static void printAllDataBase(Connection connection) {
+        System.out.println(AnswerText.getAnswerTextTable(connection));
+        System.out.println(Question.getQuestionTable(connection));
+        System.out.println(Pool.getPoolTable(connection));
+        System.out.println(Test.getTestTable(connection));
     }
 
     public static <T extends Number> T readInRange(T min, T max, Scanner scanner) {
