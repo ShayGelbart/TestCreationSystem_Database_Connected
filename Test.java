@@ -423,5 +423,20 @@ public class Test {
         return sb.toString(); // Return the built string
     }
 
+    public static String getTestTable(Connection connection) throws SQLException {
+        StringBuilder result = new StringBuilder("Test Table:\n");
+        String query = "SELECT * FROM Test";
+        try (PreparedStatement pst = connection.prepareStatement(query);
+             ResultSet rs = pst.executeQuery()) {
 
+            while (rs.next()) {
+                int testId = rs.getInt("testId");
+                String subjectName = rs.getString("subjectName");
+                result.append("TestID: ").append(testId).append(", SubjectName: ").append(subjectName).append("\n");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return result.toString();
+    }
 }

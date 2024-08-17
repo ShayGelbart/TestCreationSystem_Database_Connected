@@ -160,4 +160,27 @@ public abstract class Question implements Serializable {
     public String toString() {
         return "Id-" + id + "\nQuestion text-" + questionText;
     }
+
+    public static String getQuestionTable(Connection connection) throws SQLException {
+        StringBuilder result = new StringBuilder("Question Table:\n");
+        String query = "SELECT * FROM Question";
+        try (PreparedStatement pst = connection.prepareStatement(query);
+             ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                int questionId = rs.getInt("questionId");
+                String questionText = rs.getString("questionText");
+                String subjectName = rs.getString("subjectName");
+                String difficulty = rs.getString("difficulty");
+                result.append("QuestionID: ").append(questionId).append(", QuestionText: ")
+                        .append(questionText).append(", SubjectName: ").append(subjectName)
+                        .append(", Difficulty: ").append(difficulty).append("\n");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return result.toString();
+    }
+
 }
+

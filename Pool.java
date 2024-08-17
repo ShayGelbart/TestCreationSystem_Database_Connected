@@ -70,7 +70,7 @@ public class Pool implements Serializable {
             ResultSet rs = pst.executeQuery();
             int res = 0;
             if (rs.next())
-                res =  rs.getInt(1);
+                res = rs.getInt(1);
             rs.close();
             return res;
         } catch (SQLException e) {
@@ -180,39 +180,39 @@ public class Pool implements Serializable {
     }
 
     public static boolean deleteAnswerByIndexFromPool(Connection connection, String subjectName, int answerIndex) throws SQLException {
-    PreparedStatement pst = null;
-    ResultSet rs = null;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
 
-    try {
-        String selectSql = "SELECT answerText FROM AnswersPool WHERE subjectName = ? LIMIT 1 OFFSET ?";
-        pst = connection.prepareStatement(selectSql);
-        pst.setString(1, subjectName);
-        pst.setInt(2, answerIndex - 1);
+        try {
+            String selectSql = "SELECT answerText FROM AnswersPool WHERE subjectName = ? LIMIT 1 OFFSET ?";
+            pst = connection.prepareStatement(selectSql);
+            pst.setString(1, subjectName);
+            pst.setInt(2, answerIndex - 1);
 
-        rs = pst.executeQuery();
-        if (!rs.next()) {
-            System.out.println("No answer found at the specified index.");
+            rs = pst.executeQuery();
+            if (!rs.next()) {
+                System.out.println("No answer found at the specified index.");
+                return false;
+            }
+
+            String answerText = rs.getString("answerText");
+
+            String deleteSql = "DELETE FROM AnswersPool WHERE answerText = ? AND subjectName = ?";
+            pst = connection.prepareStatement(deleteSql);
+            pst.setString(1, answerText);
+            pst.setString(2, subjectName);
+
+            int affectedRows = pst.executeUpdate();
+            return affectedRows > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
             return false;
+        } finally {
+            if (rs != null) rs.close();
+            if (pst != null) pst.close();
         }
-
-        String answerText = rs.getString("answerText");
-
-        String deleteSql = "DELETE FROM AnswersPool WHERE answerText = ? AND subjectName = ?";
-        pst = connection.prepareStatement(deleteSql);
-        pst.setString(1, answerText);
-        pst.setString(2, subjectName);
-
-        int affectedRows = pst.executeUpdate();
-        return affectedRows > 0;
-
-    } catch (SQLException e) {
-        e.printStackTrace();
-        return false;
-    } finally {
-        if (rs != null) rs.close();
-        if (pst != null) pst.close();
     }
-}
 
 
 //        if (index <= answerTextArray.size() && index > 0) {
@@ -385,4 +385,20 @@ public class Pool implements Serializable {
 //        }
 //        return str;
 //    }
+    public static String getPoolTable(Connection connection) throws SQLException {
+        StringBuilder result = new StringBuilder("Pool Table:\n");
+        String query = "SELECT * FROM Pool";
+        try (PreparedStatement pst = connection.prepareStatement(query);
+             ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                String subjectName = rs.getString("subjectName");
+                result.append("SubjectName: ").append(subjectName).append("\n");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return result.toString();
+    }
+
 }
