@@ -59,10 +59,7 @@ public class AmericanQuestion extends Question {
         try {
             // Prepare the SQL query to get the answer by index
             pst = connection.prepareStatement(
-                    "SELECT A.answerText FROM QuestionAnswer QA " +
-                            "JOIN Answer A ON QA.answerText = A.answerText " +
-                            "WHERE QA.questionId = ? ORDER BY A.answerText " +
-                            "LIMIT 1 OFFSET ?"
+                    "SELECT answerText FROM QuestionAnswer WHERE questionId = ? LIMIT 1 OFFSET ?"
             );
 
             // Set the questionId and index (offset) parameters
@@ -104,10 +101,7 @@ public class AmericanQuestion extends Question {
         try {
             // Prepare the SQL query to check if the answer is true or false
             pst = connection.prepareStatement(
-                    "SELECT A.trueness " +
-                            "FROM QuestionAnswer QA " +
-                            "JOIN Answer A ON QA.answerText = A.answerText " +
-                            "WHERE QA.questionId = ? AND QA.answerText = ?"
+                    "SELECT trueness FROM QuestionAnswer WHERE questionId = ? AND answerText = ?"
             );
 
             // Set the questionId and answerText parameters

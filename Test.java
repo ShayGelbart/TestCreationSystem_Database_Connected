@@ -50,6 +50,37 @@ public class Test {
         }
     }
 
+    public static boolean isAnswerTextInAmericanQuestion(int testId, int questionId, String answerText, Connection connection) {
+        try (PreparedStatement pst = connection.prepareStatement("SELECT 1 FROM TestQuestionAnswer qa " +
+                "WHERE qa.testId = ? AND qa.questionId = ? AND qa.answerText = ?")) {
+            pst.setInt(1, testId);
+            pst.setInt(2, questionId);
+            pst.setString(3, answerText);
+
+            try (ResultSet rs = pst.executeQuery()) {
+                return rs.next(); // Returns true if there is at least one result
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // Return false if an error occurs
+        }
+    }
+
+    public static boolean isQuestionInQuestionPool(int testId, int questionId, Connection connection) {
+        try (PreparedStatement pst = connection.prepareStatement("SELECT 1 FROM TestQuestions " +
+                "WHERE testId = ? AND questionId = ?")) {
+            pst.setInt(1, testId);
+            pst.setInt(2, questionId);
+
+            try (ResultSet rs = pst.executeQuery()) {
+                return rs.next(); // Returns true if there is at least one result
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // Return false if an error occurs
+        }
+    }
+
     public void setA(Pool a) {
         this.a = a;
     }
@@ -100,13 +131,14 @@ public class Test {
         return -1;
     }
 
-    public static int addAnswerToQuestion(String answerText, int qId, boolean trueness, Connection connection) {
-        String sql = "INSERT INTO TestQuestionAnswer (questionId, answerText, trueness) VALUES (?, ?, ?)";
+    public static int addAnswerToQuestion(int testId, String answerText, int qId, boolean trueness, Connection connection) {
+        String sql = "INSERT INTO TestQuestionAnswer (testId, questionId, answerText, trueness) VALUES (?, ?, ?, ?)";
 
         try (PreparedStatement pst = connection.prepareStatement(sql)) {
-            pst.setInt(1, qId);
-            pst.setString(2, answerText);
-            pst.setBoolean(3, trueness);
+            pst.setInt(1, testId);
+            pst.setInt(2, qId);
+            pst.setString(3, answerText);
+            pst.setBoolean(4, trueness);
 
             int result = pst.executeUpdate();
             pst.close();
@@ -158,10 +190,8 @@ public class Test {
         try {
             // Query to get all answers for the specific American question from QuestionAnswer and Answer tables
             pst = connection.prepareStatement(
-                    "SELECT A.trueness, A.answerText " +
-                            "FROM QuestionAnswer QA " +
-                            "JOIN Answer A ON QA.answerText = A.answerText " +
-                            "WHERE QA.questionId = ?"
+                    "SELECT trueness, answerText " +
+                            "FROM QuestionAnswer WHERE questionId = ?"
             );
             pst.setInt(1, questionId);
             rs = pst.executeQuery();
@@ -223,12 +253,14 @@ public class Test {
 
         while (rs.next()) {
             questionId = rs.getInt("questionId");
-            str = (i + 1) + ")";
+            str += (i + 1) + ")";
             if (isAmericanQuestion(testId, questionId, connection)) {
                 str += rs.getString("questionText") + "\n" + creatingSolutionQuestionsArray(connection, questionId);
             } else {
                 str += OpenQuestion.getOpenQuestionTextAndDiff(questionId, connection) + "Solution: " + OpenQuestion.getOpenQuestionSolution(questionId, connection) + "\n";
             }
+            str += "\n";
+            i++;
         }
         rs.close();
         if (pst != null) pst.close();
@@ -237,67 +269,158 @@ public class Test {
 
     // print the "more than one correct answer" and the "no correct answers" along
     // with the test questions and their answers
-    public static String manualFileAddedAnswersToString(Connection connection, int testId) throws SQLException { // test to file
-        int i = 0;
-        String str = "";
+//    public static String manualFileAddedAnswersToString(Connection connection, int testId) throws SQLException { // test to file
+//        int i = 0;
+//        String str = "";
+//        PreparedStatement pst = null;
+//        ResultSet rs = null;
+//        try {
+//            pst = connection.prepareStatement("SELECT * FROM TestQuestions t JOIN Question q ON t.questionId = q.questionId WHERE testId = ?");
+//            pst.setInt(1, testId);
+//            rs = pst.executeQuery();
+//
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
+//
+//        int questionId;
+//        while (rs.next()) {
+//            questionId = rs.getInt("questionId");
+//            str = rs.getString("difficulty") + ": " + rs.getString("questionText") + "\n";
+//            if (isAmericanQuestion(testId, questionId, connection)) {
+//                str = "(American question), " + str + AmericanQuestion.getAmericanQuestionAnswers(connection, questionId);
+//                str += "Answer-Not a single answer is correct\n";
+//                str += "Answer-More than one answer is correct\n\n";
+//            } else // open question
+//                str = "(Open question), " + str;
+//            str = (i + 1) + ")" + str;
+//            i++;
+//        }
+//        rs.close();
+//        pst.close();
+//        return str;
+//    }
+    public static String manualFileAddedAnswersToString(Connection connection, int testId) throws SQLException {
+        StringBuilder sb = new StringBuilder(); // Use StringBuilder for efficient string concatenation
         PreparedStatement pst = null;
         ResultSet rs = null;
+
         try {
-            pst = connection.prepareStatement("SELECT * FROM TestQuestions t JOIN Question q ON t.questionId = q.questionId WHERE testId = ?");
+            pst = connection.prepareStatement(
+                    "SELECT q.questionId, q.questionText, q.difficulty " +
+                            "FROM TestQuestions t " +
+                            "JOIN Question q ON t.questionId = q.questionId " +
+                            "WHERE t.testId = ?"
+            );
             pst.setInt(1, testId);
             rs = pst.executeQuery();
 
+            int i = 1; // Start numbering from 1
+            while (rs.next()) {
+                int questionId = rs.getInt("questionId");
+                sb.append(i).append(")");
+                String difficulty = rs.getString("difficulty");
+                String questionText = rs.getString("questionText");
+
+                sb.append(difficulty).append(": ").append(questionText).append("\n");
+
+                if (isAmericanQuestion(testId, questionId, connection)) {
+                    sb.append("(American question), ");
+                    sb.append(AmericanQuestion.getAmericanQuestionAnswers(connection, questionId));
+                    sb.append("Answer-Not a single answer is correct\n");
+                    sb.append("Answer-More than one answer is correct\n\n");
+                } else {
+                    sb.append("(Open question)\n");
+                }
+                sb.append("\n");
+                i++;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
+            // Consider rethrowing or handling the exception as needed
+        } finally {
+            if (rs != null) rs.close();
+            if (pst != null) pst.close();
         }
 
-        int questionId;
-        while (rs.next()) {
-            questionId = rs.getInt("questionId");
-            str = rs.getString("difficulty") + ": " + rs.getString("questionText") + "\n";
-            if (isAmericanQuestion(testId, questionId, connection)) {
-                str = "(American question), " + str + AmericanQuestion.getAmericanQuestionAnswers(connection, questionId);
-                str += "Answer-Not a single answer is correct\n";
-                str += "Answer-More than one answer is correct\n\n";
-            } else // open question
-                str = "(Open question), " + str;
-            str = (i + 1) + ")" + str;
-            i++;
-        }
-        rs.close();
-        pst.close();
-        return str;
+        return sb.toString(); // Return the built string
     }
 
-    public static String AutoFileAddedAnswersToString(Connection connection, int testId) throws SQLException { // test to file
-        int i = 0;
-        String str = "";
+//    public static String AutoFileAddedAnswersToString(Connection connection, int testId) throws SQLException { // test to file
+//        int i = 0;
+//        String str = "";
+//        PreparedStatement pst = null;
+//        ResultSet rs = null;
+//        try {
+//            pst = connection.prepareStatement("SELECT * FROM TestQuestions t JOIN Question q ON t.questionId = q.questionId WHERE testId = ?");
+//            pst.setInt(1, testId);
+//            rs = pst.executeQuery();
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
+//
+//        int questionId;
+//        while (rs.next()) {
+//            questionId = rs.getInt("questionId");
+//            str += rs.getString("difficulty") + ": " + rs.getString("questionText") + "\n";
+//            if (isAmericanQuestion(testId, questionId, connection)) {
+//                str += "(American question), " + str + AmericanQuestion.getAmericanQuestionAnswers(connection, questionId);
+//                str += "Answer-Not a single answer is correct\n";
+//                str += "Answer-More than one answer is correct\n\n";
+//            } else // open question
+//                str += "(Open question), " + str;
+//            str += (i + 1) + ")" + str;
+//            i++;
+//        }
+//        rs.close();
+//        if (pst != null) pst.close();
+//        return str;
+//    }
+
+    public static String AutoFileAddedAnswersToString(Connection connection, int testId) throws SQLException {
+        StringBuilder sb = new StringBuilder(); // Use StringBuilder for efficient string concatenation
         PreparedStatement pst = null;
         ResultSet rs = null;
+
         try {
-            pst = connection.prepareStatement("SELECT * FROM TestQuestions t JOIN Question q ON t.questionId = q.questionId WHERE testId = ?");
+            pst = connection.prepareStatement(
+                    "SELECT q.questionId, q.questionText, q.difficulty " +
+                            "FROM TestQuestions t " +
+                            "JOIN Question q ON t.questionId = q.questionId " +
+                            "WHERE t.testId = ?"
+            );
             pst.setInt(1, testId);
             rs = pst.executeQuery();
+
+            int i = 1;
+            while (rs.next()) {
+                int questionId = rs.getInt("questionId");
+                sb.append(i).append(")");
+                String difficulty = rs.getString("difficulty");
+                String questionText = rs.getString("questionText");
+
+                sb.append(difficulty).append(": ").append(questionText).append("\n");
+
+                if (isAmericanQuestion(testId, questionId, connection)) {
+                    sb.append("(American question)\n");
+                    sb.append(AmericanQuestion.getAmericanQuestionAnswers(connection, questionId));
+                    sb.append("Answer-Not a single answer is correct\n");
+                    sb.append("Answer-More than one answer is correct\n\n");
+                } else {
+                    sb.append("(Open question)\n");
+                }
+                sb.append("\n");
+                i++;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
+            // Consider rethrowing or handling the exception as needed
+        } finally {
+            if (rs != null) rs.close();
+            if (pst != null) pst.close();
         }
 
-        int questionId;
-        while (rs.next()) {
-            questionId = rs.getInt("questionId");
-            str = rs.getString("difficulty") + ": " + rs.getString("questionText") + "\n";
-            if (isAmericanQuestion(testId, questionId, connection)) {
-                str = "(American question), " + str + AmericanQuestion.getAmericanQuestionAnswers(connection, questionId);
-                str += "Answer-Not a single answer is correct\n";
-                str += "Answer-More than one answer is correct\n\n";
-            } else // open question
-                str = "(Open question), " + str;
-            str = (i + 1) + ")" + str;
-            i++;
-        }
-        rs.close();
-        if(pst != null) pst.close();
-        return str;
+        return sb.toString(); // Return the built string
     }
 
 
