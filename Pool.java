@@ -179,6 +179,42 @@ public class Pool implements Serializable {
         return false; // Return false if no row was deleted
     }
 
+    public static boolean deleteAnswerByIndexFromPool(Connection connection, String subjectName, int answerIndex) throws SQLException {
+    PreparedStatement pst = null;
+    ResultSet rs = null;
+
+    try {
+        String selectSql = "SELECT answerText FROM AnswersPool WHERE subjectName = ? LIMIT 1 OFFSET ?";
+        pst = connection.prepareStatement(selectSql);
+        pst.setString(1, subjectName);
+        pst.setInt(2, answerIndex - 1);
+
+        rs = pst.executeQuery();
+        if (!rs.next()) {
+            System.out.println("No answer found at the specified index.");
+            return false;
+        }
+
+        String answerText = rs.getString("answerText");
+
+        String deleteSql = "DELETE FROM AnswersPool WHERE answerText = ? AND subjectName = ?";
+        pst = connection.prepareStatement(deleteSql);
+        pst.setString(1, answerText);
+        pst.setString(2, subjectName);
+
+        int affectedRows = pst.executeUpdate();
+        return affectedRows > 0;
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return false;
+    } finally {
+        if (rs != null) rs.close();
+        if (pst != null) pst.close();
+    }
+}
+
+
 //        if (index <= answerTextArray.size() && index > 0) {
 //            questionArray.remove(index - 1);
 //            return true;
