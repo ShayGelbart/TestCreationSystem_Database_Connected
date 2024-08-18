@@ -432,10 +432,17 @@ public class Main {
             System.out.println("Try adding a question\n");
             return;
         }
-        System.out.println("Enter the index of the question you want to delete");
+
+        System.out.println("Enter the index of the answer you want to delete\nNote that you can only delete answers that are not related to open questions");
         int index = readInRange(1, amountOfQuestion, sc);
 
-        if (Pool.deleteAnswerByIndexFromPool(connection, subjectName, index))
+        String answerText = Pool.getAnswerTextArrayAtIndex(connection, subjectName, index);
+        if(Pool.isAnswerRelatedToOpenQuestion(answerText, subjectName, connection)) {
+            System.out.println("Your answer is related to open question,Unable to delete it");
+            return;
+        }
+
+        if (Pool.deleteAnswerFromAllTables(connection, answerText))
             System.out.println("Successfully deleted question number-" + index);
         else
             System.out.println("Failed to delete question from array, try with a different index");

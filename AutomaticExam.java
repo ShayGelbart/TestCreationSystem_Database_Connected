@@ -69,7 +69,7 @@ public class AutomaticExam implements Examable {
                 } else { // open question
                     isAmerican = false;
                     String answerToOpenQuestion = OpenQuestion.getOpenQuestionSolution(questionId, connection);
-                    reassignedCheck = Test.addAnswerToQuestion(testId, answerToOpenQuestion, questionId, isAnswerTrue, connection);
+                    reassignedCheck = Test.addAnswerToQuestion(testId, answerToOpenQuestion, questionId, true, connection);
                     if (reassignedCheck == -1)
                         return false;
                 }
