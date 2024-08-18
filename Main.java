@@ -26,7 +26,7 @@ public class Main {
             System.out.println("Enter your choice\n" + "1.Create a test and pick question and answers\n"
                     + "2.Alter a pool or create a new pool\n" +
                     "3.Print All Information in our Database\n" +
-                    "3.EXIT");
+                    "0.EXIT");
 
             mainChoice = readInRange(0, 3, sc);
             switch (mainChoice) {
