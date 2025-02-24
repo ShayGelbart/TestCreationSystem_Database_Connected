@@ -1,7 +1,7 @@
 # Test Creation and Management System
 ## Submitters
--Shay Gelbart, ID 326602802
--Arina Kuprina, ID 900427956
+-Shay Gelbart
+-Arina Kuprina
 
 ## Overview
 
