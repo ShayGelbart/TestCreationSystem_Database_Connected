@@ -1,7 +1,6 @@
 # Test Creation and Management System
 ## Submitters
--Shay Gelbart
-
+-Shay Gelbart 
 -Arina Kuprina
 
 ## Overview
